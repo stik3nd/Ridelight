@@ -5,6 +5,7 @@ apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 26
+
     defaultConfig {
         applicationId "com.rdireito.ridelight"
         minSdkVersion 16
@@ -13,12 +14,21 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    dataBinding {
+        enabled = true
+    }
+}
+
+androidExtensions {
+    experimental = true
 }
 
 dependencies {
@@ -30,6 +40,11 @@ dependencies {
     // Android
     implementation "com.android.support:appcompat-v7:$versions.support_library"
     implementation "com.android.support.constraint:constraint-layout:$versions.constraint_layout"
+    kapt "com.android.databinding:compiler:$versions.gradle"
+
+    // Architecture Components
+    implementation "android.arch.lifecycle:extensions:$versions.arch_components"
+    kapt "android.arch.lifecycle:compiler:$versions.arch_components"
 
     // Dagger
     implementation "com.google.dagger:dagger:$versions.dagger"
@@ -37,8 +52,39 @@ dependencies {
     implementation "com.google.dagger:dagger-android-support:$versions.dagger"
     kapt "com.google.dagger:dagger-android-processor:$versions.dagger"
 
+    // ReactiveX
+    implementation "io.reactivex.rxjava2:rxjava:$versions.rx_java"
+    implementation "io.reactivex.rxjava2:rxandroid:$versions.rx_android"
+    implementation "com.jakewharton.rxbinding2:rxbinding-kotlin:$versions.rx_binding"
+
+    // Network
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+    implementation "com.squareup.okhttp3:logging-interceptor:$versions.ok_http"
+
+    // Image loading/caching
+    implementation "com.github.bumptech.glide:glide:$versions.glide"
+    kapt "com.github.bumptech.glide:compiler:$versions.glide"
+
+    // Utils
+    implementation "com.jakewharton.timber:timber:$versions.timber"
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:$versions.leak_canary"
+    releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$versions.leak_canary"
+
     // Test
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+}
+
+// Ensure the no-op dependency is always used in JVM tests.
+configurations.all { config ->
+    if (config.name.contains('UnitTest')) {
+        config.resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'com.squareup.leakcanary' && details.requested.name == 'leakcanary-android') {
+                details.useTarget(group: details.requested.group, name: 'leakcanary-android-no-op', version: details.requested.version)
+            }
+        }
+    }
 }

@@ -1,18 +1,37 @@
 package com.rdireito.ridelight
 
-import android.app.Application
 import com.rdireito.ridelight.common.di.component.DaggerAppComponent
+import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.support.DaggerApplication
+import timber.log.Timber
+import javax.inject.Inject
 
 class App : DaggerApplication() {
 
-  override fun onCreate() {
-    super.onCreate()
-  }
+    @Inject lateinit var logger: Timber.Tree
 
-  override fun applicationInjector(): AndroidInjector<out App> {
-    return DaggerAppComponent.builder().create(this)
-  }
+    override fun onCreate() {
+        super.onCreate()
+        initLogger()
+        initMemoryAnalyzer()
+    }
+
+    private fun initMemoryAnalyzer() {
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return
+        }
+        LeakCanary.install(this)
+    }
+
+    private fun initLogger() {
+        Timber.plant(logger)
+    }
+
+    override fun applicationInjector(): AndroidInjector<out App> {
+        return DaggerAppComponent.builder().create(this)
+    }
 
 }

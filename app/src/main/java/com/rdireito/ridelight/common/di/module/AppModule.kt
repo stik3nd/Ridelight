@@ -9,7 +9,10 @@ import javax.inject.Singleton
 import dagger.Provides
 
 
-@Module
+@Module(includes = [
+    AndroidModule::class,
+    LogModule::class
+])
 abstract class AppModule {
 
     @Binds
