@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.rdireito.ridelight">
 
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
   <application
       android:name=".App"
       android:allowBackup="true"
@@ -10,13 +13,23 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:supportsRtl="true"
       android:theme="@style/AppTheme">
+
     <activity android:name=".feature.main.ui.activity.MainActivity">
       <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-
-        <category android:name="android.intent.category.LAUNCHER"/>
+        <action android:name="android.intent.action.VIEW"/>
       </intent-filter>
     </activity>
+
+    <!-- Use an alias in case we want to change the launch activity without breaking homescreen shortcuts. -->
+    <activity-alias
+        android:name=".Launcher"
+        android:targetActivity=".feature.main.ui.activity.MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity-alias>
+
   </application>
 
 </manifest>

@@ -25,8 +25,7 @@ class MainActivity : BaseActivity(), MainContract.View {
 
         presenter.onCreate()
         val user = User("Rodrigo")
-        binding.setVariable(BR.user, user)
-        binding.executePendingBindings()
+        binding.user = user
     }
 
     override fun show(text: String) {

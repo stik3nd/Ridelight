@@ -11,6 +11,6 @@ abstract class AndroidBinderModule {
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [MainActivityModule::class])
-    abstract fun bindMainActivity(): MainActivity
+    abstract fun bindsMainActivity(): MainActivity
 
 }

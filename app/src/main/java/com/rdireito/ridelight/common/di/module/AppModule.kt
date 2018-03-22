@@ -18,4 +18,7 @@ abstract class AppModule {
     @Binds
     abstract fun application(app: App): Application
 
+    @Binds
+    abstract fun applicationContext(app: App): Context
+
 }

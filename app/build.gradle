@@ -4,19 +4,30 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 26
+    def STRING_TYPE = 'String'
+
+    compileSdkVersion 27
 
     defaultConfig {
         applicationId "com.rdireito.ridelight"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        def BASE_API_HOST = 'BASE_API_HOST'
+        def AUTH_TOKEN = 'AUTH_TOKEN'
+
+        debug {
+            buildConfigField(STRING_TYPE, BASE_API_HOST, "$debug_api_host")
+            buildConfigField(STRING_TYPE, AUTH_TOKEN, "$debug_auth_token")
+        }
         release {
+            buildConfigField(STRING_TYPE, BASE_API_HOST, "$release_api_host")
+            buildConfigField(STRING_TYPE, AUTH_TOKEN, "$release_auth_token")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -39,6 +50,7 @@ dependencies {
 
     // Android
     implementation "com.android.support:appcompat-v7:$versions.support_library"
+    implementation "com.android.support:support-v4:$versions.support_library"
     implementation "com.android.support.constraint:constraint-layout:$versions.constraint_layout"
     kapt "com.android.databinding:compiler:$versions.gradle"
 
