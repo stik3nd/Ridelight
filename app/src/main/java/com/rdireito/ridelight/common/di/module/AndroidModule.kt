@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import dagger.Module
 import dagger.Provides
+import dagger.Reusable
 import java.util.Locale
 import javax.inject.Singleton
 
@@ -11,7 +12,7 @@ import javax.inject.Singleton
 class AndroidModule {
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesLocale(context: Context): Locale = context.resources.configuration.run {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             locales.get(0)

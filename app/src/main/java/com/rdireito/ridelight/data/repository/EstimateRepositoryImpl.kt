@@ -7,11 +7,11 @@ import io.reactivex.Single
 import javax.inject.Inject
 
 class EstimateRepositoryImpl @Inject constructor(
-        private val estimateApi: EstimateApi
+    private val estimateApi: EstimateApi
 ) : EstimateRepository {
 
     override fun estimates(estimateRequest: EstimateRequest): Single<List<Estimate>> {
         return estimateApi.estimates(estimateRequest)
-//        return Single.just(emptyList<Estimate>())
     }
+
 }

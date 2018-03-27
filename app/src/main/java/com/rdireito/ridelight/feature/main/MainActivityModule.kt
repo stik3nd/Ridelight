@@ -1,32 +1,18 @@
 package com.rdireito.ridelight.feature.main
 
-import com.google.gson.Gson
-import com.rdireito.ridelight.common.data.executor.SchedulerComposer
-import com.rdireito.ridelight.common.di.scope.ActivityScope
-import com.rdireito.ridelight.data.repository.EstimateRepository
-import com.rdireito.ridelight.feature.main.ui.activity.MainActivity
-import com.rdireito.ridelight.feature.main.ui.activity.MainContract
-import com.rdireito.ridelight.feature.main.ui.activity.MainPresenterImpl
+import android.arch.lifecycle.ViewModel
+import com.rdireito.ridelight.common.di.ViewModelKey
+import com.rdireito.ridelight.feature.main.ui.activity.*
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
+import dagger.multibindings.IntoMap
 
 @Module
-class MainActivityModule {
+abstract class MainActivityModule {
 
-    @Provides
-    @ActivityScope
-    fun providesMainView(mainActivity: MainActivity): MainContract.View {
-        return mainActivity
-    }
-
-    @Provides
-    @ActivityScope
-    fun providesMainPresenter(
-            mainView: MainContract.View,
-            estimateRepository: EstimateRepository,
-            scheduler: SchedulerComposer,
-            gson: Gson
-    ): MainContract.Presenter =
-            MainPresenterImpl(mainView, estimateRepository, scheduler, gson)
+    @Binds
+    @IntoMap
+    @ViewModelKey(MainViewModel::class)
+    abstract fun bindsMainViewModel(viewModel: MainViewModel): ViewModel
 
 }

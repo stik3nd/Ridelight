@@ -9,7 +9,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 class AuthInterceptor @Inject constructor(
-        private val locale: Locale
+    private val locale: Locale
 ) : Interceptor {
 
     private val acceptLanguage: String by lazy { locale.languageTag }
@@ -19,10 +19,10 @@ class AuthInterceptor @Inject constructor(
     }
 
     private fun handleRequest(request: Request): Request = request
-            .newBuilder()
-            .apply {
-                addHeader("Authorization", "Bearer ${BuildConfig.AUTH_TOKEN}")
-                addHeader("Accept-Language", acceptLanguage)
-            }
-            .build()
+        .newBuilder()
+        .apply {
+            addHeader("Authorization", "Bearer ${BuildConfig.AUTH_TOKEN}")
+            addHeader("Accept-Language", acceptLanguage)
+        }
+        .build()
 }

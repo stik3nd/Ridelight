@@ -4,28 +4,28 @@ buildscript {
 
     ext.versions = [
         // Gradle
-        gradle              : '3.0.1',
+        gradle           : '3.0.1',
         // Kotlin
-        kotlin              : '1.2.30',
+        kotlin           : '1.2.30',
         // Android
-        support_library     : '27.1.0',
-        constraint_layout   : '1.0.2',
+        support_library  : '27.1.0',
+        constraint_layout: '1.0.2',
         // Architecture Components
-        arch_components     : '1.1.1',
+        arch_components  : '1.1.1',
         // Dagger
-        dagger              : '2.15',
+        dagger           : '2.15',
         // ReactiveX
-        rx_java             : '2.1.11',
-        rx_android          : '2.0.2',
-        rx_binding          : '2.1.1',
+        rx_java          : '2.1.11',
+        rx_android       : '2.0.2',
+        rx_binding       : '2.1.1',
         // Network
-        ok_http             : '3.10.0',
-        retrofit            : '2.4.0',
+        ok_http          : '3.10.0',
+        retrofit         : '2.4.0',
         // Image loading/caching
-        glide               : '4.6.1',
+        glide            : '4.6.1',
         // Utils
-        timber              : '4.6.1',
-        leak_canary         : '1.5.4'
+        timber           : '4.6.1',
+        leak_canary      : '1.5.4'
     ]
 
     repositories {

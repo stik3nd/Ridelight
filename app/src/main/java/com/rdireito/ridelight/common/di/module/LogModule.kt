@@ -2,6 +2,7 @@ package com.rdireito.ridelight.common.di.module
 
 import dagger.Module
 import dagger.Provides
+import dagger.Reusable
 import timber.log.Timber
 import javax.inject.Singleton
 
@@ -9,7 +10,7 @@ import javax.inject.Singleton
 class LogModule {
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesTimber(): Timber.Tree = Timber.DebugTree()
 
 }

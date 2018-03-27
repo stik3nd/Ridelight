@@ -12,7 +12,7 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun providesEstimateRepository(
-            estimateRepositoryImpl: EstimateRepositoryImpl
+        estimateRepositoryImpl: EstimateRepositoryImpl
     ): EstimateRepository
 
 }

@@ -4,6 +4,7 @@ import com.rdireito.ridelight.common.data.executor.AppSchedulerComposer
 import com.rdireito.ridelight.common.data.executor.SchedulerComposer
 import dagger.Binds
 import dagger.Module
+import dagger.Reusable
 import javax.inject.Singleton
 
 @Module(includes = [
@@ -13,7 +14,7 @@ import javax.inject.Singleton
 abstract class DataModule {
 
     @Binds
-    @Singleton
+    @Reusable
     abstract fun bindsSchedulerComposer(schedulerManager: AppSchedulerComposer): SchedulerComposer
 
 }

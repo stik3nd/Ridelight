@@ -6,7 +6,7 @@ import com.rdireito.ridelight.feature.main.MainActivityModule
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
-@Module
+@Module(includes = [ViewModelBinderModule::class])
 abstract class AndroidBinderModule {
 
     @ActivityScope

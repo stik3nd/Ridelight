@@ -7,6 +7,7 @@ import com.rdireito.ridelight.BuildConfig
 import com.rdireito.ridelight.data.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
+import dagger.Reusable
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -20,43 +21,42 @@ import javax.inject.Singleton
 class NetworkModule {
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesHttpLoggingInterceptor(): HttpLoggingInterceptor =
-            HttpLoggingInterceptor().apply {
-                level = when (BuildConfig.DEBUG) {
-                    true -> HttpLoggingInterceptor.Level.BODY
-                    else -> HttpLoggingInterceptor.Level.NONE
-                }
+        HttpLoggingInterceptor().apply {
+            level = when (BuildConfig.DEBUG) {
+                true -> HttpLoggingInterceptor.Level.BODY
+                else -> HttpLoggingInterceptor.Level.NONE
             }
+        }
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesOkHttpClient(
-            authInterceptor: AuthInterceptor,
-            httpLoggingInterceptor: HttpLoggingInterceptor
+        authInterceptor: AuthInterceptor,
+        httpLoggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
-            .addInterceptor(httpLoggingInterceptor)
-            .build()
+        .addInterceptor(authInterceptor)
+        .addInterceptor(httpLoggingInterceptor)
+        .build()
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesGson(): Gson = GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-            .create()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        .create()
 
     @Provides
-    @Singleton
+    @Reusable
     fun providesRetrofit(
-            okHttpClient: OkHttpClient,
-            gson: Gson
+        okHttpClient: OkHttpClient,
+        gson: Gson
     ): Retrofit = Retrofit.Builder()
-            .client(okHttpClient)
-            .baseUrl(BuildConfig.BASE_API_HOST)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .build()
+        .client(okHttpClient)
+        .baseUrl(BuildConfig.BASE_API_HOST)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+        .build()
 
 }
-
