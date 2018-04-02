@@ -1,6 +1,6 @@
 package com.rdireito.ridelight.feature.main.ui.activity
 
-import android.location.Address
+import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.common.architecture.BaseUiIntent
 
 sealed class MainUiIntent : BaseUiIntent {

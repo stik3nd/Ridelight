@@ -13,6 +13,7 @@ import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.databinding.ActivityMainBinding
 import com.rdireito.ridelight.data.model.User
+import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_main.*
@@ -44,6 +45,7 @@ class MainActivity : BaseActivity(), BaseView<MainUiIntent, MainUiState> {
         binding.userNameText
 
         bind()
+        startActivity(AddressSearchActivity.getIntent(this))
     }
 
     private fun showToast(text: String) {

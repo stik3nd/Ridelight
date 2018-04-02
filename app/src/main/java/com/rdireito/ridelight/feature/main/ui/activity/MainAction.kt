@@ -1,7 +1,7 @@
 package com.rdireito.ridelight.feature.main.ui.activity
 
-import android.location.Address
 import com.rdireito.ridelight.common.architecture.BaseAction
+import com.rdireito.ridelight.data.model.Address
 
 sealed class MainAction : BaseAction {
 
