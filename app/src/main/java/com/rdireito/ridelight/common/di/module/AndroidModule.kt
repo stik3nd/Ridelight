@@ -1,6 +1,7 @@
 package com.rdireito.ridelight.common.di.module
 
 import android.content.Context
+import android.location.Geocoder
 import android.os.Build
 import dagger.Module
 import dagger.Provides
@@ -20,5 +21,12 @@ class AndroidModule {
             locale
         }
     }
+
+    @Provides
+    @Reusable
+    fun providesGeocoder(context: Context, locale: Locale): Geocoder = Geocoder(
+        context,
+        locale
+    )
 
 }

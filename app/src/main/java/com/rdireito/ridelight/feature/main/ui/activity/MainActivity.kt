@@ -3,7 +3,6 @@ package com.rdireito.ridelight.feature.main.ui.activity
 import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.databinding.DataBindingUtil
-import android.location.Address
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -11,6 +10,7 @@ import com.jakewharton.rxbinding2.view.clicks
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.ui.BaseActivity
+import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.databinding.ActivityMainBinding
 import com.rdireito.ridelight.data.model.User
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
@@ -89,7 +89,7 @@ class MainActivity : BaseActivity(), BaseView<MainUiIntent, MainUiState> {
     private fun confirmDropoffIntent(): Observable<MainUiIntent.ConfirmDropoffLoadIntent> {
         goButton.clicks()
             .throttleFirst(TAP_THROTTLE_TIME, TimeUnit.MILLISECONDS)
-            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address(Locale.US)) }
+            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address.ABSENT) }
             .subscribe(confirmDropoffIntentPublisher)
         return confirmDropoffIntentPublisher
     }
