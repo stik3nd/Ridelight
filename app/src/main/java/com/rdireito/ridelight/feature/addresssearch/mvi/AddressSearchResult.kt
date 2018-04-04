@@ -9,6 +9,11 @@ sealed class AddressSearchResult : BaseResult {
         object Success : ClearAddressResult()
     }
 
+    sealed class AllowClearAddressResult : AddressSearchResult() {
+        object Allow : AllowClearAddressResult()
+        object Deny : AllowClearAddressResult()
+    }
+
     sealed class FetchAddressesResult : AddressSearchResult() {
         object Loading : FetchAddressesResult()
         data class Error(val error: Throwable) : FetchAddressesResult()

@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".feature.addresssearch.ui.AddressSearchActivity">
@@ -30,7 +31,6 @@
                 android:tint="@color/colorAccent"
                 android:layout_marginBottom="@dimen/spacing_normal"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_arrow_back_black_24dp"/>
@@ -43,23 +43,25 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
                 android:imeOptions="actionSearch"
                 android:inputType="text"
-                android:hint="Intput address"
-                android:layout_marginLeft="@dimen/spacing_micro"
+                android:hint="@string/input_address_hint"
+                android:layout_marginStart="@dimen/spacing_micro"
                 android:layout_marginBottom="@dimen/spacing_normal"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toRightOf="@+id/addressSearchBackImage"
-                app:layout_constraintRight_toRightOf="parent"/>
+                app:layout_constraintRight_toLeftOf="@+id/addressSearchClearImage"/>
 
-            <ProgressBar
-                android:id="@+id/addressSearchProgress"
-                android:layout_width="0dp"
-                android:layout_height="4dp"
-                android:indeterminate="true"
-                style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/addressSearchClearImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:tint="@color/colorAccent"
+                android:layout_marginBottom="@dimen/spacing_normal"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_clear_black_24dp"
                 android:visibility="gone"
                 tools:visibility="visible"/>
 
@@ -67,11 +69,41 @@
 
     </android.support.v7.widget.CardView>
 
+    <ProgressBar
+        android:id="@+id/addressSearchProgress"
+        android:layout_width="0dp"
+        android:layout_height="4dp"
+        android:indeterminate="true"
+        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/addressSearchAddressCard"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/addressSearchPlacesList"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/spacing_normal"
         app:layoutManager="android.support.v7.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@+id/addressSearchAddressCard"/>
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/addressSearchAddressCard"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:listitem="@layout/item_address_search"/>
+
+    <TextView
+        android:id="@+id/addressSearchErrorText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:text="Error"/>
 
 </android.support.constraint.ConstraintLayout>

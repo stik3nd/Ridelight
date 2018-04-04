@@ -11,8 +11,10 @@ import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
+import com.rdireito.ridelight.data.model.Location
 import com.rdireito.ridelight.databinding.ActivityMainBinding
 import com.rdireito.ridelight.data.model.User
+import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
@@ -63,7 +65,7 @@ class MainActivity : BaseActivity(), BaseView<MainUiIntent, MainUiState> {
         loadingProgress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
         errorText.visibility = if (state.error != null) View.VISIBLE else View.GONE
         state.error?.let {
-            errorText.setText("Error: ${it.localizedMessage}")
+            errorText.text = "Error: ${it.localizedMessage}"
             return
         }
 
@@ -89,13 +91,10 @@ class MainActivity : BaseActivity(), BaseView<MainUiIntent, MainUiState> {
     private fun confirmDropoffIntent(): Observable<MainUiIntent.ConfirmDropoffLoadIntent> {
         goButton.clicks()
             .throttleFirst(TAP_THROTTLE_TIME, TimeUnit.MILLISECONDS)
-            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address.ABSENT) }
+//            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address.ABSENT) }
+            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address("", "", "", "", "", Location(0.0, 0.0))) }
             .subscribe(confirmDropoffIntentPublisher)
         return confirmDropoffIntentPublisher
-    }
-
-    companion object {
-        private const val TAP_THROTTLE_TIME = 500L
     }
 
 }
