@@ -79,6 +79,14 @@ dependencies {
     implementation "com.github.bumptech.glide:glide:$versions.glide"
     kapt "com.github.bumptech.glide:compiler:$versions.glide"
 
+    // Arrow
+    implementation "io.arrow-kt:arrow-core:$versions.arrow"
+    implementation "io.arrow-kt:arrow-syntax:$versions.arrow"
+    implementation "io.arrow-kt:arrow-typeclasses:$versions.arrow"
+    implementation "io.arrow-kt:arrow-data:$versions.arrow"
+    implementation "io.arrow-kt:arrow-instances:$versions.arrow"
+    kapt "io.arrow-kt:arrow-annotations-processor:$versions.arrow"
+
     // Utils
     implementation "com.jakewharton.timber:timber:$versions.timber"
     debugImplementation "com.squareup.leakcanary:leakcanary-android:$versions.leak_canary"

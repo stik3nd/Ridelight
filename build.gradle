@@ -23,6 +23,8 @@ buildscript {
         retrofit         : '2.4.0',
         // Image loading/caching
         glide            : '4.6.1',
+        // Arrow
+        arrow            : '0.6.1',
         // Utils
         timber           : '4.6.1',
         leak_canary      : '1.5.4'
