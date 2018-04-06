@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">Ridelight</string>
     <string name="input_address_hint">Input address</string>
+    <string name="confirm_dropoff">Confirm dropoff</string>
+    <string name="confirm_pickup">Confirm pickup</string>
+    <string name="dropoff">Drop off</string>
+    <string name="pickup">Pickup</string>
+    <string name="address_hint">eg: Avenida Brasil</string>
+    <string name="location_permission_rationale">We need your permission to define your location!</string>
+    <string name="location_permission_never_ask_again">Please, provide us your location permission on Settings.</string>
+    <string name="ok">Ok</string>
+    <string name="no">No</string>
 </resources>

@@ -55,11 +55,8 @@ class AddressSearchViewModel @Inject constructor(
     companion object {
         private val reducer = BiFunction { previousState: AddressSearchUiState, result: AddressSearchResult ->
             when (result) {
-                is ClearAddressResult -> when (result) {
-                    is ClearAddressResult.Success -> {
-                        AddressSearchUiState.idle().copy(clearQuery = true)
-                    }
-                }
+                is ClearAddressResult.Success ->
+                    AddressSearchUiState.idle().copy(clearQuery = true)
 
                 is AllowClearAddressResult -> when (result) {
                     is Allow -> previousState.copy(clearQuery = false, hasClearButton = true)
@@ -74,11 +71,8 @@ class AddressSearchViewModel @Inject constructor(
                     }
                 }
 
-                is SelectAddressResult -> when (result) {
-                    is SelectAddressResult.Success -> {
-                        AddressSearchUiState.addressSelected(result.address)
-                    }
-                }
+                is SelectAddressResult.Success ->
+                    AddressSearchUiState.addressSelected(result.address)
             }
         }
     }

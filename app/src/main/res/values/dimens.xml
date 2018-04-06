@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Keylines -->
     <dimen name="spacing_nano">2dp</dimen>
     <dimen name="spacing_micro">4dp</dimen>
     <dimen name="spacing_normal">8dp</dimen>
     <dimen name="spacing_double">16dp</dimen>
     <dimen name="spacing_large">24dp</dimen>
-
+    <dimen name="button_default_height">56dp</dimen>
     <dimen name="card_elevation">4dp</dimen>
+
+    <!-- RideAddressCardView -->
+    <dimen name="address_icon_size">24dp</dimen>
 </resources>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.rdireito.ridelight.feature.ride.ui.RideActivity">
+
+        <FrameLayout
+            android:id="@+id/rideMapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <com.rdireito.ridelight.feature.ride.ui.widget.RideAddressCardView
+            android:id="@+id/rideAddressView"
+            android:layout_margin="@dimen/spacing_normal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="visible"
+            tools:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
+
+        <TextView
+            android:id="@+id/ridePickupText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/pickup"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginE4nd="@dimen/spacing_normal"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/rideActionContainer"/>
+
+        <TextView
+            android:id="@+id/rideDropoffText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F00"
+            android:hint="@string/dropoff"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginEnd="@dimen/spacing_normal"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/rideActionContainer"/>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/rideActionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginEnd="@dimen/spacing_normal"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <Button
+                android:id="@+id/rideConfirmDropoffButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm_dropoff"/>
+
+
+            <Button
+                android:id="@+id/rideConfirmPickupButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm_pickup"
+                android:visibility="gone"/>
+
+        </android.support.constraint.ConstraintLayout>
+
+    </android.support.constraint.ConstraintLayout>
+
+</layout>

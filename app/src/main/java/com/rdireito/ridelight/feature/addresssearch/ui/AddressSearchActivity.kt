@@ -17,6 +17,7 @@ import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
+import com.rdireito.ridelight.data.model.Location
 import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
 import com.rdireito.ridelight.feature.addresssearch.mvi.AddressSearchUiIntent
 import com.rdireito.ridelight.feature.addresssearch.mvi.AddressSearchUiIntent.*
@@ -77,9 +78,6 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
             return
         }
 
-        state.addresses.map {
-            Timber.d("addresses=[${it.address}], name=[${it.name}]")
-        }
         if (state.addresses.isEmpty()) {
             addressSearchAdapter.clear()
         } else {
@@ -93,7 +91,6 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
         if (state.clearQuery) {
             addressSearchAddressEdit.text.clear()
         }
-
     }
 
     private fun init() {
@@ -109,6 +106,17 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
             .subscribe(this::render)
             .disposeOnDestroy()
         viewModel.processIntents(intents())
+
+        intent.extras?.let {
+            val address = it.getParcelable<Address>(EXTRA_ADDRESS)?.let {
+                addressSearchAddressEdit.setText(it.address)
+            }
+        }
+
+//        setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_ADDRESS,
+//            Address("", "My address test, 99", "", "", "", Location(0.0, 0.0))
+//            ))
+//        finish()
     }
 
     private fun clearAddressIntent(): Observable<ClearAddressIntent> {
@@ -156,8 +164,9 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
     companion object {
         const val EXTRA_ADDRESS = "extra_address"
 
-        fun getIntent(context: Context) =
+        fun getIntent(context: Context, address: Address? = null): Intent =
             Intent(context, AddressSearchActivity::class.java)
+                .putExtra(EXTRA_ADDRESS, address)
     }
 
 }

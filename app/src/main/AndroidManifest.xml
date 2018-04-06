@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
         android:name=".App"
@@ -14,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".feature.main.ui.activity.MainActivity">
+        <activity android:name=".feature.ride.ui.RideActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
             </intent-filter>
@@ -23,7 +24,7 @@
         <!-- Use an alias in case we want to change the launch activity without breaking homescreen shortcuts. -->
         <activity-alias
             android:name=".Launcher"
-            android:targetActivity=".feature.main.ui.activity.MainActivity">
+            android:targetActivity=".feature.ride.ui.RideActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -32,6 +33,10 @@
         </activity-alias>
 
         <activity android:name=".feature.addresssearch.ui.AddressSearchActivity"/>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key"/>
 
     </application>
 

@@ -15,7 +15,7 @@ data class Address(
 
     constructor(androidAddress: android.location.Address) : this(
         name = androidAddress.thoroughfare ?: androidAddress.getAddressLine(0) ?: "",
-        address = androidAddress.thoroughfare ?: androidAddress.getAddressLine(0) ?: "",
+        address = androidAddress.getAddressLine(0) ?: androidAddress.thoroughfare ?: "",
         city = androidAddress.locality ?: androidAddress.subAdminArea.orEmpty(),
         country = androidAddress.countryName.orEmpty(),
         location = Location(androidAddress.latitude, androidAddress.longitude)

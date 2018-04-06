@@ -15,6 +15,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
     }
@@ -56,6 +57,8 @@ dependencies {
     implementation "com.android.support:cardview-v7:$versions.support_library"
     implementation "com.android.support.constraint:constraint-layout:$versions.constraint_layout"
     implementation "com.android.support:recyclerview-v7:$versions.support_library"
+    implementation "com.google.android.gms:play-services-maps:$versions.play_services"
+    implementation "com.google.android.gms:play-services-location:$versions.play_services"
     kapt "com.android.databinding:compiler:$versions.gradle"
 
     // Architecture Components
@@ -95,6 +98,7 @@ dependencies {
     implementation "com.jakewharton.timber:timber:$versions.timber"
     debugImplementation "com.squareup.leakcanary:leakcanary-android:$versions.leak_canary"
     releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$versions.leak_canary"
+    implementation "com.tbruyelle.rxpermissions2:rxpermissions:$versions.rx_permissions"
 
     // Test
     testImplementation 'junit:junit:4.12'

@@ -53,16 +53,6 @@ class AddressSearchActionProcessor @Inject constructor(
             }
         }
 
-    var actionProcessor =
-        ObservableTransformer<AddressSearchAction, AddressSearchResult> { actions ->
-            actions.publish { selector ->
-                matchActionsToProcessors(selector)
-                    .mergeWith(
-                        checkActionIsImplemented(selector)
-                    )
-            }
-        }
-
     private fun matchActionsToProcessors(selector: Observable<AddressSearchAction>): Observable<AddressSearchResult> =
         Observable.merge(
             selector.ofType(ClearAddressAction::class.java).compose(clearAddressActionProcessor),
@@ -71,17 +61,26 @@ class AddressSearchActionProcessor @Inject constructor(
             selector.ofType(SelectAddressAction::class.java).compose(selectAddressActionProcessor)
         )
 
-    private fun checkActionIsImplemented(selector: Observable<AddressSearchAction>): Observable<AddressSearchResult> =
+    private fun assertActionIsImplemented(selector: Observable<AddressSearchAction>): Observable<AddressSearchResult> =
         selector.filter { v ->
             v !is ClearAddressAction
                 && v !is AllowClearAddressAction
                 && v !is FetchAddressesAction
                 && v !is SelectAddressAction
+        }.flatMap { v ->
+            Observable.error<AddressSearchResult>(
+                IllegalArgumentException("Unknown Action type=[$v]")
+            )
         }
-            .flatMap { v ->
-                Observable.error<AddressSearchResult>(
-                    IllegalArgumentException("Unknown Action type: $v")
-                )
+
+    var actionProcessor =
+        ObservableTransformer<AddressSearchAction, AddressSearchResult> { actions ->
+            actions.publish { selector ->
+                matchActionsToProcessors(selector)
+                    .mergeWith(
+                        assertActionIsImplemented(selector)
+                    )
             }
+        }
 
 }

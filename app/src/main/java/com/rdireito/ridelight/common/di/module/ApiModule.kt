@@ -12,8 +12,7 @@ class ApiModule {
 
     @Provides
     @Reusable
-    fun providesEstimateApi(retrofit: Retrofit): EstimateApi {
-        return retrofit.create(EstimateApi::class.java)
-    }
+    fun providesEstimateApi(retrofit: Retrofit): EstimateApi =
+        retrofit.create(EstimateApi::class.java)
 
 }

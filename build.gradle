@@ -6,10 +6,11 @@ buildscript {
         // Gradle
         gradle           : '3.0.1',
         // Kotlin
-        kotlin           : '1.2.30',
+        kotlin           : '1.2.31',
         // Android
         support_library  : '27.1.0',
         constraint_layout: '1.0.2',
+        play_services    : '12.0.1',
         // Architecture Components
         arch_components  : '1.1.1',
         // Dagger
@@ -27,7 +28,8 @@ buildscript {
         arrow            : '0.6.1',
         // Utils
         timber           : '4.6.1',
-        leak_canary      : '1.5.4'
+        leak_canary      : '1.5.4',
+        rx_permissions   : '0.9.5@aar'
     ]
 
     repositories {

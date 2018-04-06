@@ -9,4 +9,11 @@
         <item name="android:windowBackground">@color/white</item>
     </style>
 
+    <!-- [BEGIN Buttons] -->
+    <style name="Button.ColorPrimary" parent="Theme.AppCompat.Light">
+        <item name="colorControlHighlight">@color/colorPrimaryDark</item>
+        <item name="colorButtonNormal">@color/colorPrimary</item>
+    </style>
+    <!-- [END Buttons] -->
+
 </resources>
