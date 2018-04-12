@@ -1,11 +1,19 @@
 package com.rdireito.ridelight.feature.ride.ui
 
-import com.google.gson.Gson
+import arrow.core.Option
+import arrow.core.applicative
+import arrow.core.ev
+import arrow.syntax.applicative.map
+import arrow.syntax.option.none
+import arrow.syntax.option.some
+import arrow.syntax.option.toOption
 import com.rdireito.ridelight.common.data.executor.SchedulerComposer
 import com.rdireito.ridelight.common.ui.ActivityResult
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.data.model.request.EstimateRequest
+import com.rdireito.ridelight.data.repository.AddressRepository
 import com.rdireito.ridelight.data.repository.EstimateRepository
+import com.rdireito.ridelight.feature.MESSAGE_TIME
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult
 import com.rdireito.ridelight.feature.ride.ui.RideViewModel.Companion.DROPOFF_REQUEST_CODE
@@ -13,61 +21,22 @@ import com.rdireito.ridelight.feature.ride.ui.RideViewModel.Companion.PICKUP_REQ
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity.Companion.EXTRA_ADDRESS
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult.*
+import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult.FetchEstimatesResult.*
+import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class RideActionProcessor @Inject constructor(
     private val estimateRepository: EstimateRepository,
-    private val scheduler: SchedulerComposer,
-    private val gson: Gson
+    private val addressRepository: AddressRepository,
+    private val scheduler: SchedulerComposer
 ) {
-
-    private val estimateRequestJson =
-        """{
-  "stops": [
-    {
-      "loc": [
-        40.4169473,
-        -3.7057172
-      ],
-      "name": "Puerta del Sol",
-      "addr": "Plaza de la Puerta del Sol",
-      "num": "s/n",
-      "city": "Madrid",
-      "country": "Spain",
-      "instr": "Hello, world!",
-      "contact": {
-        "name": "John Doe",
-        "mobile_cc": "+34",
-        "mobile_num": "611111113"
-      }
-    },
-    {
-      "loc": [
-      40.415097,
-      -3.713593
-      ],
-      "name": "Puerta del Sol",
-      "addr": "Plaza de la Puerta del Sol",
-      "num": "s/n",
-      "city": "Madrid",
-      "country": "Spain",
-      "instr": "Hello, world!",
-      "contact": {
-        "name": "John Doe",
-        "mobile_cc": "+34",
-        "mobile_num": "611111113"
-      }
-    }
-  ]
-}"""
-
-    private val estimateRequest = gson.fromJson<EstimateRequest>(estimateRequestJson, EstimateRequest::class.java)
 
     private val initialActionProcessor =
         ObservableTransformer<RideAction.InitialAction, RideResult.InitialResult> { actions ->
-            actions.flatMap { action ->
+            actions.flatMap { _ ->
                 Observable
                     .just(RideResult.InitialResult.Initial)
             }
@@ -75,15 +44,15 @@ class RideActionProcessor @Inject constructor(
 
     private val invokeChangeDropoffActionProcessor =
         ObservableTransformer<InvokeChangeDropoffAction, InvokeChangeDropoffResult> { actions ->
-            actions.flatMap { _ ->
-                Observable.just(InvokeChangeDropoffResult.Invoke)
+            actions.map { _ ->
+                InvokeChangeDropoffResult.Invoke
             }
         }
 
     private val invokeChangePickupActionProcessor =
         ObservableTransformer<InvokeChangePickupAction, InvokeChangePickupResult> { actions ->
-            actions.flatMap { _ ->
-                Observable.just(InvokeChangePickupResult.Invoke)
+            actions.map { _ ->
+                InvokeChangePickupResult.Invoke
             }
         }
 
@@ -121,18 +90,68 @@ class RideActionProcessor @Inject constructor(
             }
         }
 
+    private val confirmDropoffActionProcessor =
+        ObservableTransformer<ConfirmDropoffAction, ConfirmDropoffResult> { actions ->
+            actions.flatMap { action ->
+                action.dropoffAddress.fold(
+                    none@{
+                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS)
+                            .map { ConfirmDropoffResult.HideMessage }
+                            .cast(ConfirmDropoffResult::class.java)
+                            .startWith(ConfirmDropoffResult.Invalid)
+                    },
+                    some@{ _ ->
+                        action.currentPosition.fold(
+                            none@{ Observable.just(ConfirmDropoffResult.Valid) },
+                            some@{ userPosition ->
+                                addressRepository
+                                    // Try to get an pickup address based on the current best position we have from the user,
+                                    // if we don't find any address just return a none()
+                                    .addressByLocation(userPosition.latitude, userPosition.longitude)
+                                    .toObservable()
+                                    .map { address -> ConfirmDropoffResult.ValidWithPickup(address.some()) }
+                                    .defaultIfEmpty(ConfirmDropoffResult.ValidWithPickup(none()))
+                                    .onErrorReturn { ConfirmDropoffResult.ValidWithPickup(none()) }
+                                    .cast(ConfirmDropoffResult::class.java)
+                                    .subscribeOn(scheduler.io())
+                                    .observeOn(scheduler.ui())
+                                    // Start with a Valid confirm drop off so our UI will render this state
+                                    .startWith(ConfirmDropoffResult.Valid)
+                            }
+                        )
+                    }
+                )
+            }
+        }
+
 
     private val fetchEstimatesProcessor =
         ObservableTransformer<RideAction.FetchEstimatesAction, RideResult.FetchEstimatesResult> { actions ->
             actions.flatMap { action ->
-                estimateRepository.estimates(estimateRequest)
-                    .toObservable()
-                    .map { estimates -> RideResult.FetchEstimatesResult.Success(estimates) }
-                    .cast(RideResult.FetchEstimatesResult::class.java)
-                    .onErrorReturn(RideResult.FetchEstimatesResult::Error)
-                    .subscribeOn(scheduler.io())
-                    .observeOn(scheduler.ui())
-                    .startWith(RideResult.FetchEstimatesResult.Loading)
+                // If any of the values is none() it short-circuits to none()
+                val estimateRequest = Option.applicative().map(action.pickup, action.dropoff, { (pickup, dropoff) ->
+                    EstimateRequest(pickup, dropoff)
+                }).ev()
+
+                estimateRequest.fold(
+                    none@ {
+                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS)
+                            .map { FetchEstimatesResult.HideMessage }
+                            .cast(FetchEstimatesResult::class.java)
+                            .startWith(FetchEstimatesResult.InvalidParams)
+                    },
+                    some@ { request ->
+                        estimateRepository.estimates(request)
+                            .toObservable()
+                            .map { estimates -> Success(estimates) }
+                            .cast(FetchEstimatesResult::class.java)
+                            .onErrorReturn(FetchEstimatesResult::Error)
+                            .subscribeOn(scheduler.io())
+                            .observeOn(scheduler.ui())
+                            .startWith(FetchEstimatesResult.Loading)
+                    }
+                )
+
             }
         }
 
@@ -142,6 +161,7 @@ class RideActionProcessor @Inject constructor(
             selector.ofType(InvokeChangeDropoffAction::class.java).compose(invokeChangeDropoffActionProcessor),
             selector.ofType(InvokeChangePickupAction::class.java).compose(invokeChangePickupActionProcessor),
             selector.ofType(CheckActivityResultAction::class.java).compose(checkActivityResultActionProcessor),
+            selector.ofType(ConfirmDropoffAction::class.java).compose(confirmDropoffActionProcessor),
             selector.ofType(FetchEstimatesAction::class.java).compose(fetchEstimatesProcessor)
         ))
 
@@ -151,6 +171,7 @@ class RideActionProcessor @Inject constructor(
                 && v !is InvokeChangeDropoffAction
                 && v !is InvokeChangePickupAction
                 && v !is CheckActivityResultAction
+                && v !is ConfirmDropoffAction
                 && v !is FetchEstimatesAction
         }.flatMap { v ->
             Observable.error<RideResult>(

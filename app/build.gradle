@@ -35,10 +35,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
-    dataBinding {
-        enabled = true
-    }
 }
 
 androidExtensions {
@@ -55,11 +51,11 @@ dependencies {
     implementation "com.android.support:appcompat-v7:$versions.support_library"
     implementation "com.android.support:support-v4:$versions.support_library"
     implementation "com.android.support:cardview-v7:$versions.support_library"
+    implementation "com.android.support:design:$versions.support_library"
     implementation "com.android.support.constraint:constraint-layout:$versions.constraint_layout"
     implementation "com.android.support:recyclerview-v7:$versions.support_library"
     implementation "com.google.android.gms:play-services-maps:$versions.play_services"
     implementation "com.google.android.gms:play-services-location:$versions.play_services"
-    kapt "com.android.databinding:compiler:$versions.gradle"
 
     // Architecture Components
     implementation "android.arch.lifecycle:extensions:$versions.arch_components"

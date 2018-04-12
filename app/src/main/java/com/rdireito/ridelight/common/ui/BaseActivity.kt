@@ -9,8 +9,8 @@ abstract class BaseActivity : DaggerAppCompatActivity() {
     private val disposables = CompositeDisposable()
 
     override fun onDestroy() {
-        super.onDestroy()
         disposables.dispose()
+        super.onDestroy()
     }
 
     fun Disposable.disposeOnDestroy() = disposables.add(this)

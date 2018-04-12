@@ -1,5 +1,6 @@
 package com.rdireito.ridelight.feature.ride.ui.mvi
 
+import arrow.core.Option
 import com.rdireito.ridelight.common.architecture.BaseResult
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.data.model.Estimate
@@ -24,10 +25,19 @@ sealed class RideResult : BaseResult {
         data class PickupSuccess(val address: Address) : CheckActivityResult()
     }
 
+    sealed class ConfirmDropoffResult : RideResult() {
+        object Valid : ConfirmDropoffResult()
+        data class ValidWithPickup(val initialPickup: Option<Address>) : ConfirmDropoffResult()
+        object Invalid : ConfirmDropoffResult()
+        object HideMessage : ConfirmDropoffResult()
+    }
+
     sealed class FetchEstimatesResult : RideResult() {
         object Loading : FetchEstimatesResult()
         data class Error(val error: Throwable) : FetchEstimatesResult()
         data class Success(val estimates: List<Estimate>) : FetchEstimatesResult()
+        object InvalidParams : FetchEstimatesResult()
+        object HideMessage : FetchEstimatesResult()
     }
 
 }

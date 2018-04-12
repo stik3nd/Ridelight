@@ -8,52 +8,45 @@
     tools:parentTag="android.support.v7.widget.CardView">
 
     <android.support.constraint.ConstraintLayout
+        android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_normal"
-        tools:background="@color/white">
+        android:layout_marginTop="@dimen/spacing_normal">
 
-        <ImageView
-            android:id="@+id/addAddressIcon"
-            android:layout_width="@dimen/address_icon_size"
-            android:layout_height="@dimen/address_icon_size"
-            android:layout_marginStart="@dimen/spacing_normal"
-            android:background="?selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:contentDescription="@null"
-            android:cropToPadding="false"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_dropoff"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
-
-        <TextView
+        <com.rdireito.ridelight.feature.widget.AddressView
+            android:id="@+id/ridePickupAddressView"
             android:layout_width="0dp"
-            android:id="@+id/textAddress"
+            android:layout_height="0dp"
+            android:minHeight="@dimen/address_view_min_height"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            app:indicatorText="@string/pickup"
+            app:indicatorIcon="@drawable/ic_pickup"
+            app:layout_constraintBottom_toBottomOf="@+id/rideDropoffAddressView"/>
+
+        <com.rdireito.ridelight.feature.widget.AddressView
+            android:id="@+id/rideDropoffAddressView"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="?selectableItemBackground"
-            android:clickable="true"
-            android:minHeight="@dimen/address_icon_size"
-            android:layout_marginStart="@dimen/spacing_micro"
-            android:layout_marginEnd="@dimen/spacing_normal"
-            android:textSize="16sp"
-            android:textColor="#666"
-            android:text="@string/dropoff"
-            tools:text="Address test, 460"
-            app:layout_constraintTop_toTopOf="@+id/addAddressIcon"
-            app:layout_constraintLeft_toRightOf="@+id/addAddressIcon"
-            app:layout_constraintRight_toRightOf="parent"/>
+            android:minHeight="@dimen/address_view_min_height"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            app:indicatorText="@string/dropoff"
+            app:indicatorIcon="@drawable/ic_dropoff"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/dropoffActionContainer"/>
 
         <FrameLayout
-            android:id="@+id/buttonNext"
+            android:id="@+id/dropoffActionContainer"
             android:layout_width="0dp"
             android:layout_height="@dimen/button_default_height"
             android:foreground="?selectableItemBackground"
             android:clickable="true"
-            android:layout_marginTop="@dimen/spacing_normal"
-            app:layout_constraintTop_toBottomOf="@+id/textAddress"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent">
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <Button
                 android:layout_width="match_parent"
@@ -61,6 +54,30 @@
                 android:text="@string/confirm_dropoff"
                 android:textAllCaps="true"
                 android:clickable="false"
+                android:background="@color/colorPrimary"
+                android:theme="@style/Button.ColorPrimary"
+                style="@style/Widget.AppCompat.Button.Borderless"/>
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/pickupActionContainer"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_default_height"
+            android:foreground="?selectableItemBackground"
+            android:clickable="true"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="invisible">
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_default_height"
+                android:text="@string/confirm_pickup"
+                android:textAllCaps="true"
+                android:clickable="false"
+                android:enabled="false"
                 android:background="@color/colorPrimary"
                 android:theme="@style/Button.ColorPrimary"
                 style="@style/Widget.AppCompat.Button.Borderless"/>

@@ -4,21 +4,15 @@ import com.google.gson.annotations.SerializedName
 
 data class Estimate(
     val vehicleType: Vehicle,
-    val totalPrice: String?,
     val priceFormatted: String?,
-    val currency: String?,
-    val currencySymbol: String?,
     val eta: ETA?
 )
 
 data class Vehicle(
     @SerializedName("_id") val id: String,
     val name: String,
-    val shortName: String,
     val description: String,
-    val icons: Icon,
-    val icon: String,
-    val serviceType: String?
+    val icons: Icon
 )
 
 data class Icon(

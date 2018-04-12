@@ -1,7 +1,15 @@
 package com.rdireito.ridelight.feature.ride.ui
 
 import android.arch.lifecycle.ViewModel
+import android.location.Location
+import arrow.core.Option
+import arrow.core.applicative
+import arrow.core.ev
+import arrow.core.getOrElse
+import arrow.syntax.applicative.map
+import arrow.syntax.option.none
 import arrow.syntax.option.some
+import arrow.syntax.option.toOption
 import com.rdireito.ridelight.common.architecture.BaseViewModel
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction.*
@@ -15,6 +23,7 @@ import io.reactivex.functions.BiFunction
 import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.properties.Delegates
 
 
 class RideViewModel @Inject constructor(
@@ -23,6 +32,23 @@ class RideViewModel @Inject constructor(
 
     private val intentsSubject = PublishSubject.create<RideUiIntent>()
     private val statesObservable: Observable<RideUiState> = stream()
+
+    var currentPosition: Option<Location> by Delegates.vetoable(none()) { _, oldValue, newValue ->
+        if (oldValue.isEmpty()) {
+            true
+        } else {
+            // If any of the values is none() it short-circuits to none()
+            val oldNewPair = Option.applicative().map(oldValue, newValue) { (old, new) ->
+                Pair(old, new)
+            }.ev()
+
+            // If newValue accuracy is higher than oldValue we keep it, otherwise we veto the newValue
+            oldNewPair.fold(
+                none@{ false },
+                some@{ (old, new) -> new.accuracy > old.accuracy }
+            )
+        }
+    }
 
     override fun processIntents(intents: Observable<RideUiIntent>) {
         intents.subscribe(intentsSubject)
@@ -35,6 +61,7 @@ class RideViewModel @Inject constructor(
             .doOnNext { Timber.d("uiintent=[$it]") }
             .map(this::intentToAction)
             .doOnNext { Timber.d("action=[$it]") }
+            .filter { it != SkipAction }
             .compose(actionProcessorHolder.actionProcessor)
             .doOnNext { Timber.d("result=[$it]") }
             .scan(RideUiState.idle(), reducer)
@@ -56,8 +83,12 @@ class RideViewModel @Inject constructor(
             is ChangeDropoffIntent -> InvokeChangeDropoffAction
             is ChangePickupIntent -> InvokeChangePickupAction
             is OnActivityResultIntent -> CheckActivityResultAction(intent.activityResult)
-            is ConfirmDropoffIntent -> FetchEstimatesAction(intent.address)
-            is ConfirmPickupIntent -> FetchEstimatesAction(intent.address)
+            is ConfirmDropoffIntent -> ConfirmDropoffAction(intent.address, currentPosition)
+            is ConfirmPickupIntent -> FetchEstimatesAction(intent.pickup, intent.dropoff)
+            is NewLocationIntent -> {
+                currentPosition = intent.location
+                SkipAction
+            }
         }
 
     companion object {
@@ -80,7 +111,7 @@ class RideViewModel @Inject constructor(
                     previousState.copy(invokeChangePickup = true)
                 }
 
-                is RideResult.CheckActivityResult -> when (result) {
+                is CheckActivityResult -> when (result) {
                     is CheckActivityResult.Failure -> previousState.copy(
                         invokeChangeDropoff = false, invokeChangePickup = false
                     )
@@ -92,19 +123,41 @@ class RideViewModel @Inject constructor(
                     )
                 }
 
+                is ConfirmDropoffResult -> when (result) {
+                    is ConfirmDropoffResult.Invalid -> previousState.copy(
+                        showPickupFields = false, invalidAddress = true
+                    )
+                    is ConfirmDropoffResult.Valid -> previousState.copy(
+                        showPickupFields = true, invalidAddress = false
+                    )
+                    is ConfirmDropoffResult.ValidWithPickup -> previousState.copy(
+                        pickupAdress = result.initialPickup
+                    )
+                    is ConfirmDropoffResult.HideMessage -> previousState.copy(
+                        invalidAddress = false
+                    )
+                }
+
                 is FetchEstimatesResult -> when (result) {
-                    is FetchEstimatesResult.Loading -> {
-                        previousState.copy(isLoading = true)
-                    }
-                    is FetchEstimatesResult.Error -> {
-                        previousState.copy(isLoading = false, error = result.error)
-                    }
-                    is FetchEstimatesResult.Success -> {
-                        previousState.copy(isLoading = false, estimates = result.estimates)
-                    }
+                    is FetchEstimatesResult.Loading -> previousState.copy(
+                        isLoading = true, showProducts = true
+                    )
+                    is FetchEstimatesResult.Error -> previousState.copy(
+                        isLoading = false, error = result.error
+                    )
+                    is FetchEstimatesResult.Success -> previousState.copy(
+                        isLoading = false, estimates = result.estimates
+                    )
+                    is FetchEstimatesResult.InvalidParams -> previousState.copy(
+                        invalidAddress = true
+                    )
+                    is FetchEstimatesResult.HideMessage -> previousState.copy(
+                        invalidAddress = false
+                    )
                 }
             }
         }
+
     }
 
 }

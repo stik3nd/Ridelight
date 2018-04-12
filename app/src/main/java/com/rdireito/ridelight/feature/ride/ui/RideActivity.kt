@@ -6,28 +6,23 @@ import android.app.AlertDialog
 import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.databinding.DataBindingUtil
 import android.os.Bundle
+import android.support.annotation.StringRes
 import android.support.constraint.ConstraintSet
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.animation.FastOutLinearInInterpolator
-import android.support.v4.view.animation.LinearOutSlowInInterpolator
-import android.transition.*
+import android.support.design.widget.Snackbar
+import android.transition.AutoTransition
+import android.transition.TransitionManager
 import android.view.View
-import android.widget.TextView
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.jakewharton.rxbinding2.view.clicks
+import arrow.syntax.option.some
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.extension.*
 import com.rdireito.ridelight.common.ui.ActivityResult
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
-import com.rdireito.ridelight.data.model.Location
-import com.rdireito.ridelight.databinding.ActivityRideBinding
-import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
+import com.rdireito.ridelight.data.source.BoundLocationManager
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
 import com.rdireito.ridelight.feature.ride.ui.RideViewModel.Companion.DROPOFF_REQUEST_CODE
 import com.rdireito.ridelight.feature.ride.ui.RideViewModel.Companion.PICKUP_REQUEST_CODE
@@ -36,14 +31,14 @@ import com.rdireito.ridelight.feature.ride.ui.map.RideMapFragment.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideUiIntent
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideUiIntent.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideUiState
+import com.rdireito.ridelight.feature.userEventLimiter
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.Observable
-import io.reactivex.ObservableTransformer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposables
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_ride.*
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
@@ -61,66 +56,22 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     private val confirmDropoffIntentPublisher = PublishSubject.create<ConfirmDropoffIntent>()
     private val onActivityResultPublisher = PublishSubject.create<OnActivityResultIntent>()
     private val confirmPickupIntentPublisher = PublishSubject.create<ConfirmPickupIntent>()
+    private val newLocationIntentPublisher = PublishSubject.create<NewLocationIntent>()
 
     private val rxPermissions: RxPermissions by lazy { RxPermissions(this) }
+    private val boundLocationCallback: BoundLocationCallback = BoundLocationCallback(newLocationIntentPublisher)
+    private val locationManager: BoundLocationManager = BoundLocationManager(this, this, boundLocationCallback)
     private var mapFragment: RideMapFragment? = null
         get() = findFragmentWithType(RideMapFragment.TAG)
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var location: android.location.Location? = null
+    private var rideAddressViewSubscription = Disposables.empty()
+    private var snackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val binding: ActivityRideBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_ride)
+        setContentView(R.layout.activity_ride)
 
         init(savedInstanceState)
         bind()
-        requestLocationPermission()
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener(this, { location ->
-                    if (location != null) {
-                        this.location = location
-                    }
-                })
-        }
-    }
-
-    private fun requestLocationPermission() {
-        rxPermissions
-            .requestEach(Manifest.permission.ACCESS_FINE_LOCATION)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { permission ->
-                if (permission.granted) {
-                    // `permission.name` is granted !
-                    Timber.d("permissionResult:granted=[${permission.granted}]")
-                } else if (permission.shouldShowRequestPermissionRationale) {
-                    // Denied permission without ask never again
-                    Timber.d("permissionResult:shouldShowRequestPermissionRationale=[${permission.shouldShowRequestPermissionRationale}]")
-                    AlertDialog.Builder(this)
-                        .setCancelable(false)
-                        .setMessage(R.string.location_permission_rationale)
-                        .setPositiveButton(R.string.ok) { _, _ -> requestLocationPermission() }
-                        .show()
-                } else {
-                    // Denied permission with ask never again
-                    // Need to go to the settings
-                    Timber.d("permissionResult:neverAskAgain=[${permission}]")
-                    AlertDialog.Builder(this)
-                        .setCancelable(false)
-                        .setMessage(R.string.location_permission_never_ask_again)
-                        .setPositiveButton(R.string.ok) { _, _ -> goToAppSettings() }
-                        .setNegativeButton(R.string.no) { _, _ -> finish() }
-                        .show()
-                }
-            }
-            .disposeOnDestroy()
-    }
-
-    private fun goToAppSettings() {
-        openAppSettingsDetails()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -140,6 +91,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     override fun intents(): Observable<RideUiIntent> =
         Observable.merge(listOf(
             initialIntent(),
+            newLocationIntent(),
             changeDropoffIntent(),
             changePickupIntent(),
             onActivityResultIntent(),
@@ -162,33 +114,79 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             return
         }
 
+        if (state.invalidAddress) {
+            showMessage(R.string.select_address)
+        } else {
+            hideMessage()
+        }
+
+        // renderDropoffState
         state.dropoffAdress.map(this::renderDropoff)
+
+        // renderPickupState
+        if (state.showPickupFields) {
+            rideAddressView.showPickupFields()
+        }
         state.pickupAdress.map(this::renderPickup)
 
-//        loadingProgress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-//        errorText.visibility = if (state.error != null) View.VISIBLE else View.GONE
-//        state.error?.let {
-//            errorText.text = "Error: ${it.localizedMessage}"
-//            return
-//        }
+        // renderProductsState
+        if (state.showProducts) {
+            showProductsView()
 
-        state
-            .estimates
-            .takeIf { it.isNotEmpty() }
-            ?.map {
-                Timber.d("vehicle=[${it.vehicleType.name}]")
+            rideProductView.run {
+                setLoading(state.isLoading)
+                setError(state.error)
+                setProducts(state.estimates)
             }
+        } else {
+            rideProductView.visibility = View.GONE
+        }
     }
 
     private fun init(savedInstanceState: Bundle?) {
         if (savedInstanceState == null)
             attachViews()
+
+        requestLocationPermission()
+        subscribeToAddressHeightChanges()
     }
 
     private fun attachViews() {
         supportFragmentManager.commitTransactions {
             it.attachFragment(RideMapFragment.newInstance(), R.id.rideMapContainer, RideMapFragment.TAG)
         }
+    }
+
+    private fun requestLocationPermission() {
+        rxPermissions
+            .requestEach(Manifest.permission.ACCESS_FINE_LOCATION)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { permission ->
+                when {
+                    permission.granted -> {
+                        Timber.d("permissionResult:granted=[${permission.granted}]")
+                    }
+
+                    permission.shouldShowRequestPermissionRationale -> {
+                        AlertDialog.Builder(this)
+                            .setCancelable(false)
+                            .setMessage(R.string.location_permission_rationale)
+                            .setPositiveButton(R.string.ok) { _, _ -> requestLocationPermission() }
+                            .show()
+                    }
+
+                    else -> {
+                        // Denied permission with never ask again
+                        AlertDialog.Builder(this)
+                            .setCancelable(false)
+                            .setMessage(R.string.location_permission_never_ask_again)
+                            .setPositiveButton(R.string.ok) { _, _ -> openAppSettingsDetails() }
+                            .setNegativeButton(R.string.no) { _, _ -> finish() }
+                            .show()
+                    }
+                }
+            }
+            .disposeOnDestroy()
     }
 
     private fun bind() {
@@ -202,8 +200,12 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     private fun initialIntent(): Observable<InitialIntent> =
         Observable.just(InitialIntent)
 
+    private fun newLocationIntent(): Observable<NewLocationIntent> {
+        return newLocationIntentPublisher
+    }
+
     private fun changeDropoffIntent(): Observable<ChangeDropoffIntent> {
-        rideDropoffText.clicks()
+        rideAddressView.dropoffClicks()
             .compose(userEventLimiter())
             .map { ChangeDropoffIntent }
             .subscribe(changeDropoffIntentPublisher)
@@ -211,7 +213,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     }
 
     private fun changePickupIntent(): Observable<ChangePickupIntent> {
-        ridePickupText.clicks()
+        rideAddressView.pickupClicks()
             .compose(userEventLimiter())
             .map { ChangePickupIntent }
             .subscribe(changePickupIntentPublisher)
@@ -222,71 +224,32 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         onActivityResultPublisher
 
     private fun confirmDropoffIntent(): Observable<ConfirmDropoffIntent> {
-        rideConfirmDropoffButton.clicks()
+        rideAddressView.confirmDropoffClicks()
             .compose(userEventLimiter())
-//            .map { MainUiIntent.ConfirmDropoffLoadIntent(Address.ABSENT) }
-            .doOnNext {
-                showPickupFields()
-            }
-            .map { ConfirmDropoffIntent(Address("", "", "", "", "", Location(0.0, 0.0))) }
+            .map(::ConfirmDropoffIntent)
             .subscribe(confirmDropoffIntentPublisher)
         return confirmDropoffIntentPublisher
     }
 
-    private fun showPickupFields() {
-        TransitionManager.beginDelayedTransition(root)
-        rideConfirmDropoffButton.visibility = View.GONE
-        rideConfirmPickupButton.visibility = View.VISIBLE
-
-        ConstraintSet().apply {
-            clone(root)
-            connect(ridePickupText.id, ConstraintSet.BOTTOM, rideDropoffText.id, ConstraintSet.TOP)
-            applyTo(root)
-        }
-    }
-
     private fun confirmPickupIntent(): Observable<ConfirmPickupIntent> {
-        rideConfirmPickupButton.clicks()
+        rideAddressView.confirmPickupClicks()
             .compose(userEventLimiter())
-            .map { ConfirmPickupIntent(Address("", "", "", "", "", Location(0.0, 0.0))) }
+            .map { ConfirmPickupIntent(it.first, it.second) }
             .subscribe(confirmPickupIntentPublisher)
         return confirmPickupIntentPublisher
     }
 
     private fun renderDropoff(newAddress: Address) {
-        renderLocationChange(newAddress, rideDropoffText, RideMarker.DROPOFF)
+        if (rideAddressView.dropoffAdress != newAddress.some()) {
+            updateMapState(newAddress.location.latitude, newAddress.location.longitude, RideMarker.DROPOFF)
+            rideAddressView.dropoffAdress = newAddress.some()
+        }
     }
 
     private fun renderPickup(newAddress: Address) {
-        renderLocationChange(newAddress, ridePickupText, RideMarker.PICKUP)
-    }
-
-    private fun renderLocationChange(newAddress: Address, addressTextView: TextView, rideMarker: RideMarker) {
-        if (addressTextView.text.toString() != newAddress.address) {
-            updateMapState(newAddress.location.latitude, newAddress.location.longitude, rideMarker)
-            hideView(addressTextView) {
-                addressTextView.text = newAddress.address
-                showView(addressTextView)
-            }
-        }
-    }
-
-    private fun hideView(view: View, endAction: () -> Unit) {
-        view.animate().apply {
-            alpha(0f)
-            interpolator = FastOutLinearInInterpolator()
-            duration = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
-            withEndAction(endAction)
-            start()
-        }
-    }
-
-    private fun showView(view: View) {
-        view.animate().apply {
-            alpha(1f)
-            interpolator = FastOutLinearInInterpolator()
-            duration = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
-            start()
+        if (rideAddressView.pickupAdress != newAddress.some()) {
+            updateMapState(newAddress.location.latitude, newAddress.location.longitude, RideMarker.PICKUP)
+            rideAddressView.pickupAdress = newAddress.some()
         }
     }
 
@@ -297,9 +260,60 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         }
     }
 
-    private fun <T> userEventLimiter(): ObservableTransformer<T, T> {
-        return ObservableTransformer { upstream ->
-            upstream.throttleFirst(TAP_THROTTLE_TIME, TimeUnit.MILLISECONDS)
+    private fun showProductsView() {
+        subscribeToProductHeightChanges()
+        moveAddressCardViewUp()
+        rideProductView.visibility = View.VISIBLE
+    }
+
+    private fun moveAddressCardViewUp() {
+        TransitionManager.beginDelayedTransition(root, AutoTransition().addTarget(rideAddressView).addTarget(rideProductView))
+        rideAddressView.run {
+            hideActions()
+            disableAddresses()
+        }
+        ConstraintSet().apply {
+            clone(root)
+            clear(rideAddressView.id, ConstraintSet.BOTTOM)
+            connect(rideAddressView.id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
+            applyTo(root)
+        }
+    }
+
+    private fun subscribeToAddressHeightChanges() {
+        val subscription = rideAddressView.heightChanges()
+            .doOnNext { mapFragment?.setMapPadding(it) }
+            .retry()
+            .subscribe()
+
+        rideAddressViewSubscription = subscription
+        subscription.disposeOnDestroy()
+    }
+
+    private fun subscribeToProductHeightChanges() {
+        rideAddressViewSubscription.dispose()
+        rideProductView.heightChanges()
+            .doOnNext { mapFragment?.setMapPadding(it) }
+            .retry()
+            .subscribe()
+            .disposeOnDestroy()
+    }
+
+    private fun showMessage(@StringRes resource: Int) {
+        snackbar = Snackbar.make(root, resource, Snackbar.LENGTH_INDEFINITE).apply { show() }
+    }
+
+    private fun hideMessage() {
+        snackbar?.dismiss()
+    }
+
+    private class BoundLocationCallback(
+        private val locationPublisher: PublishSubject<NewLocationIntent>
+    ) : LocationCallback() {
+        override fun onLocationResult(result: LocationResult) {
+            result.locations.forEach {
+                locationPublisher.onNext(NewLocationIntent(it.some()))
+            }
         }
     }
 

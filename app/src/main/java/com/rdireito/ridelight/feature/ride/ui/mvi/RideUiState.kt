@@ -13,7 +13,10 @@ data class RideUiState(
     val invokeChangeDropoff: Boolean = false,
     val invokeChangePickup: Boolean = false,
     val dropoffAdress: Option<Address> = none(),
-    val pickupAdress: Option<Address> = none()
+    val pickupAdress: Option<Address> = none(),
+    val showPickupFields: Boolean = false,
+    val showProducts: Boolean = false,
+    val invalidAddress: Boolean = false
 ) : BaseUiState {
 
     companion object {

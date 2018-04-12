@@ -26,7 +26,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_address_search.*
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -66,6 +65,8 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
         )
 
     override fun render(state: AddressSearchUiState) {
+        state.selectedAddress.map(this::finishWithAddress)
+
         TransitionManager.beginDelayedTransition(root)
 
         addressSearchProgress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
@@ -86,18 +87,21 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
         }
 
 
-        state.selectedAddress.map(this::finishWithAddress)
-
         if (state.clearQuery) {
             addressSearchAddressEdit.text.clear()
         }
     }
 
-    private fun init() {
-        addressSearchBackImage.clicks().subscribe { finish() }.disposeOnDestroy()
+    override fun onBackPressed() {
+        supportFinishAfterTransition()
+    }
 
-        addressSearchPlacesList.itemAnimator = DefaultItemAnimator()
-        addressSearchPlacesList.adapter = addressSearchAdapter
+    private fun init() {
+        addressSearchBackImage.clicks().subscribe { supportFinishAfterTransition() }.disposeOnDestroy()
+        addressSearchPlacesList.apply {
+            itemAnimator = DefaultItemAnimator()
+            adapter = addressSearchAdapter
+        }
     }
 
     private fun bind() {
@@ -112,11 +116,6 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
                 addressSearchAddressEdit.setText(it.address)
             }
         }
-
-//        setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_ADDRESS,
-//            Address("", "My address test, 99", "", "", "", Location(0.0, 0.0))
-//            ))
-//        finish()
     }
 
     private fun clearAddressIntent(): Observable<ClearAddressIntent> {
@@ -158,7 +157,7 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
 
     private fun finishWithAddress(address: Address) {
         setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_ADDRESS, address))
-        finish()
+        supportFinishAfterTransition()
     }
 
     companion object {

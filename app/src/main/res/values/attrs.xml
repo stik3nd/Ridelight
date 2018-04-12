@@ -2,10 +2,10 @@
 <resources>
     <declare-styleable name="AddressView">
         <attr name="addressType" format="enum">
-            <enum name="pickup" value="0" />
-            <enum name="dropoff" value="1" />
+            <enum name="pickup" value="0"/>
+            <enum name="dropoff" value="1"/>
         </attr>
-        <attr name="addressHint" format="string" />
-        <!--    <attr name="drawableLeftCompat" format="reference" /> -->
+        <attr name="indicatorText" format="string"/>
+        <attr name="indicatorIcon" format="reference"/>
     </declare-styleable>
 </resources>

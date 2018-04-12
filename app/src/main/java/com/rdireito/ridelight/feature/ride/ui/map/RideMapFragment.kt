@@ -14,6 +14,7 @@ import com.rdireito.ridelight.R
 
 class RideMapFragment : SupportMapFragment() {
 
+    private val spacing by lazy { resources.getDimensionPixelSize(R.dimen.spacing_normal) }
     private val markers: SparseArray<Marker> = SparseArray()
 
     override fun onAttach(context: Context?) {
@@ -45,6 +46,12 @@ class RideMapFragment : SupportMapFragment() {
                 )
 
             markers.put(rideMarker.ordinal, marker)
+        }
+    }
+
+    fun setMapPadding(height: Int) {
+        withMap {
+            setPadding(spacing, spacing * 5, spacing, height + spacing)
         }
     }
 

@@ -1,16 +1,22 @@
 package com.rdireito.ridelight.feature.ride.ui.widget
 
 import android.content.Context
+import android.support.constraint.ConstraintSet
 import android.support.v7.widget.CardView
+import android.transition.ChangeBounds
+import android.transition.TransitionManager
 import android.util.AttributeSet
+import android.view.View
+import android.view.animation.AnticipateOvershootInterpolator
+import arrow.core.Option
+import arrow.syntax.option.none
 import com.jakewharton.rxbinding2.view.clicks
 import com.rdireito.ridelight.R
-import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
+import com.rdireito.ridelight.data.model.Address
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import kotlinx.android.synthetic.main.view_ride_address_card.view.*
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 class RideAddressCardView @JvmOverloads constructor(
@@ -19,56 +25,62 @@ class RideAddressCardView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : CardView(context, attributeSet, defStyleAttr) {
 
-  private val heightChanges = BehaviorSubject.create<Int>()
+    private val animTime by lazy { resources.getInteger(android.R.integer.config_mediumAnimTime).toLong() }
+    private val heightChanges = BehaviorSubject.create<Int>()
 
-  var address by Delegates.observable<String?>(null) { _, _, newValue ->
-    newValue?.let { showAddressContent(it) } ?: showAddressAbsent()
-  }
 
-  init {
-    initLayout()
-  }
-
-  private fun initLayout() {
-    inflate(context, R.layout.view_ride_address_card, this)
-  }
-
-  override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-    super.onSizeChanged(w, h, oldw, oldh)
-
-    if (heightChanges.hasObservers() && heightChanges.hasComplete().not()) {
-      heightChanges.onNext(h)
+    var dropoffAdress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
+        newValue.map { rideDropoffAddressView.updateAddress(it.address) }
     }
-  }
+    var pickupAdress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
+        newValue.map { ridePickupAddressView.updateAddress(it.address) }
+    }
 
-  fun heightChanges(): Observable<Int> =
-      heightChanges.distinctUntilChanged()
-          .doOnNext { Timber.d("RideAddressCardView height has changed=[$it]") }
+    init {
+        inflate(context, R.layout.view_ride_address_card, this)
+    }
 
-  fun nextClicks(): Observable<Unit> =
-      buttonNext.clicks()
-          .throttleFirst(TAP_THROTTLE_TIME, TimeUnit.MILLISECONDS)
-//          .observeOn(AndroidSchedulers.mainThread())
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (heightChanges.hasObservers() && heightChanges.hasComplete().not()) {
+            heightChanges.onNext(h)
+        }
+    }
 
-  fun addressClicks(): Observable<Unit> {
-    val dropOffViewClicks = addAddressIcon.clicks()
-    val radarClicks = textAddress.clicks()
+    fun dropoffClicks(): Observable<Unit> = rideDropoffAddressView.clicks()
 
-    return dropOffViewClicks.mergeWith(radarClicks)
-        .throttleFirst(TAP_THROTTLE_TIME, TimeUnit.MILLISECONDS)
-//        .observeOn(AndroidSchedulers.mainThread())
-  }
+    fun pickupClicks(): Observable<Unit> = ridePickupAddressView.clicks()
 
-  fun showAddressContent(address: String) {
-    textAddress.text = address
-  }
+    fun confirmDropoffClicks(): Observable<Option<Address>> =
+        dropoffActionContainer.clicks().map { dropoffAdress }
 
-  fun showAddressAbsent() {
-    textAddress.text = context.getString(R.string.dropoff)
-  }
+    fun confirmPickupClicks(): Observable<Pair<Option<Address>, Option<Address>>> =
+        pickupActionContainer.clicks().map { Pair(pickupAdress, dropoffAdress) }
 
-//  fun showAddressLoading() {
-//    textAddress.text = "Loading..."//context.getString(R.string.loading)
-//  }
+    fun showPickupFields() {
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(context, R.layout.view_ride_address_card_pickup)
+
+        val transition = ChangeBounds()
+        transition.interpolator = AnticipateOvershootInterpolator(1.0f)
+        transition.duration = animTime
+
+        TransitionManager.beginDelayedTransition(root, transition)
+        constraintSet.applyTo(root)
+    }
+
+    fun hideActions() {
+        dropoffActionContainer.visibility = View.GONE
+        pickupActionContainer.visibility = View.GONE
+    }
+
+    fun disableAddresses() {
+        rideDropoffAddressView.isEnabled = false
+        ridePickupAddressView.isEnabled = false
+    }
+
+    fun heightChanges(): Observable<Int> =
+        heightChanges.distinctUntilChanged()
+            .doOnNext { Timber.d("RideAddressCardView height has changed=[$it]") }
 
 }

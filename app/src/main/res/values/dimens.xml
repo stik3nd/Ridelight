@@ -8,7 +8,14 @@
     <dimen name="spacing_large">24dp</dimen>
     <dimen name="button_default_height">56dp</dimen>
     <dimen name="card_elevation">4dp</dimen>
+    <dimen name="card_radius">4dp</dimen>
 
     <!-- RideAddressCardView -->
     <dimen name="address_icon_size">24dp</dimen>
+    <dimen name="address_view_min_height">34dp</dimen>
+
+    <!-- RideProduct -->
+    <dimen name="item_ride_product_text_min_size">20sp</dimen>
+    <dimen name="item_ride_product_text_max_size">24sp</dimen>
+    <dimen name="item_ride_product_text_step_granularity">2sp</dimen>
 </resources>
