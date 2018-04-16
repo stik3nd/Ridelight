@@ -7,12 +7,17 @@ import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.support.annotation.StringRes
 import android.support.constraint.ConstraintSet
 import android.support.design.widget.Snackbar
 import android.transition.AutoTransition
 import android.transition.TransitionManager
 import android.view.View
+import arrow.core.Either
+import arrow.core.Either.Companion.left
+import arrow.syntax.either.left
+import arrow.syntax.either.right
 import arrow.syntax.option.some
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
@@ -20,6 +25,8 @@ import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.extension.*
 import com.rdireito.ridelight.common.ui.ActivityResult
+import com.rdireito.ridelight.common.ui.ActivityResult.FailureWithData
+import com.rdireito.ridelight.common.ui.ActivityResult.SuccessWithData
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.data.source.BoundLocationManager
@@ -56,7 +63,9 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     private val confirmDropoffIntentPublisher = PublishSubject.create<ConfirmDropoffIntent>()
     private val onActivityResultPublisher = PublishSubject.create<OnActivityResultIntent>()
     private val confirmPickupIntentPublisher = PublishSubject.create<ConfirmPickupIntent>()
+    private val productTryAgainIntentPublisher = PublishSubject.create<ProductTryAgainIntent>()
     private val newLocationIntentPublisher = PublishSubject.create<NewLocationIntent>()
+    private lateinit var initialIntentObservable: Observable<InitialIntent>
 
     private val rxPermissions: RxPermissions by lazy { RxPermissions(this) }
     private val boundLocationCallback: BoundLocationCallback = BoundLocationCallback(newLocationIntentPublisher)
@@ -65,6 +74,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         get() = findFragmentWithType(RideMapFragment.TAG)
     private var rideAddressViewSubscription = Disposables.empty()
     private var snackbar: Snackbar? = null
+    private var uiState: RideUiState = RideUiState.idle()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,15 +87,18 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val resultData = (data?.extras ?: Bundle.EMPTY).toMap()
-        if (resultCode == Activity.RESULT_OK) {
-            onActivityResultPublisher.onNext(OnActivityResultIntent(
-                ActivityResult.SuccessWithData(requestCode, resultData)
-            ))
-        } else {
-            onActivityResultPublisher.onNext(OnActivityResultIntent(
-                ActivityResult.FailureWithData(requestCode, resultData)
-            ))
-        }
+        val eitherActivityResult: Either<FailureWithData, SuccessWithData> =
+            if (resultCode == Activity.RESULT_OK) {
+                SuccessWithData(requestCode, resultData).right()
+            } else {
+                FailureWithData(requestCode, resultData).left()
+            }
+        onActivityResultPublisher.onNext(OnActivityResultIntent(eitherActivityResult))
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        outState?.putParcelable("state", uiState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun intents(): Observable<RideUiIntent> =
@@ -96,23 +109,12 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             changePickupIntent(),
             onActivityResultIntent(),
             confirmDropoffIntent(),
-            confirmPickupIntent()
+            confirmPickupIntent(),
+            productTryAgainIntent()
         ))
 
     override fun render(state: RideUiState) {
-        if (state.invokeChangeDropoff) {
-            startActivityForResult(AddressSearchActivity.getIntent(
-                this, state.dropoffAdress.orNull()), DROPOFF_REQUEST_CODE
-            )
-            return
-        }
-
-        if (state.invokeChangePickup) {
-            startActivityForResult(AddressSearchActivity.getIntent(
-                this, state.pickupAdress.orNull()), PICKUP_REQUEST_CODE
-            )
-            return
-        }
+        uiState = state
 
         if (state.invalidAddress) {
             showMessage(R.string.select_address)
@@ -121,13 +123,13 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         }
 
         // renderDropoffState
-        state.dropoffAdress.map(this::renderDropoff)
+        state.dropoffAdress?.let { renderDropoff(it) }
 
         // renderPickupState
         if (state.showPickupFields) {
             rideAddressView.showPickupFields()
         }
-        state.pickupAdress.map(this::renderPickup)
+        state.pickupAdress?.let { renderPickup(it) }
 
         // renderProductsState
         if (state.showProducts) {
@@ -148,6 +150,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             attachViews()
 
         requestLocationPermission()
+        initialIntentObservable = Observable.just(InitialIntent(savedInstanceState))
         subscribeToAddressHeightChanges()
     }
 
@@ -198,7 +201,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     }
 
     private fun initialIntent(): Observable<InitialIntent> =
-        Observable.just(InitialIntent)
+        initialIntentObservable
 
     private fun newLocationIntent(): Observable<NewLocationIntent> {
         return newLocationIntentPublisher
@@ -208,6 +211,11 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         rideAddressView.dropoffClicks()
             .compose(userEventLimiter())
             .map { ChangeDropoffIntent }
+            .doOnNext {
+                startActivityForResult(AddressSearchActivity.getIntent(
+                    this, rideAddressView.dropoffAdress.orNull()), DROPOFF_REQUEST_CODE
+                )
+            }
             .subscribe(changeDropoffIntentPublisher)
         return changeDropoffIntentPublisher
     }
@@ -216,6 +224,11 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         rideAddressView.pickupClicks()
             .compose(userEventLimiter())
             .map { ChangePickupIntent }
+            .doOnNext {
+                startActivityForResult(AddressSearchActivity.getIntent(
+                    this, rideAddressView.pickupAdress.orNull()), PICKUP_REQUEST_CODE
+                )
+            }
             .subscribe(changePickupIntentPublisher)
         return changePickupIntentPublisher
     }
@@ -237,6 +250,14 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             .map { ConfirmPickupIntent(it.first, it.second) }
             .subscribe(confirmPickupIntentPublisher)
         return confirmPickupIntentPublisher
+    }
+
+    private fun productTryAgainIntent(): Observable<ProductTryAgainIntent> {
+        rideProductView.tryAgainClicks()
+            .compose(userEventLimiter())
+            .map { ProductTryAgainIntent(rideAddressView.pickupAdress, rideAddressView.dropoffAdress) }
+            .subscribe(productTryAgainIntentPublisher)
+        return productTryAgainIntentPublisher
     }
 
     private fun renderDropoff(newAddress: Address) {

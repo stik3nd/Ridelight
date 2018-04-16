@@ -9,14 +9,7 @@ sealed class RideResult : BaseResult {
 
     sealed class InitialResult : RideResult() {
         object Initial : InitialResult()
-    }
-
-    sealed class InvokeChangeDropoffResult : RideResult() {
-        object Invoke : InvokeChangeDropoffResult()
-    }
-
-    sealed class InvokeChangePickupResult : RideResult() {
-        object Invoke : InvokeChangePickupResult()
+        data class RestoreState(val restoredUiState: RideUiState) : InitialResult()
     }
 
     sealed class CheckActivityResult : RideResult() {

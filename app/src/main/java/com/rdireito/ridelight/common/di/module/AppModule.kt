@@ -5,8 +5,6 @@ import android.app.Application
 import android.content.Context
 import com.rdireito.ridelight.App
 import dagger.Binds
-import javax.inject.Singleton
-import dagger.Provides
 
 
 @Module(includes = [

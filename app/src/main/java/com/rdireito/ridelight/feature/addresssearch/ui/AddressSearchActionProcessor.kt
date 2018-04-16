@@ -18,17 +18,15 @@ class AddressSearchActionProcessor @Inject constructor(
 
     private val clearAddressActionProcessor =
         ObservableTransformer<ClearAddressAction, ClearAddressResult> { actions ->
-            actions.flatMap { _ ->
-                Observable.just(ClearAddressResult.Success)
+            actions.map { _ ->
+                ClearAddressResult.Success
             }
         }
 
     private val allowClearAddressActionProcessor =
         ObservableTransformer<AllowClearAddressAction, AllowClearAddressResult> { actions ->
-            actions.flatMap { clearAction ->
-                Observable.fromCallable {
+            actions.map { clearAction ->
                     if (clearAction.length == 0) Deny else Allow
-                }
             }
         }
 
@@ -48,8 +46,8 @@ class AddressSearchActionProcessor @Inject constructor(
 
     private val selectAddressActionProcessor =
         ObservableTransformer<SelectAddressAction, SelectAddressResult> { actions ->
-            actions.flatMap { action ->
-                Observable.just(SelectAddressResult.Success(action.address))
+            actions.map { action ->
+                SelectAddressResult.Success(action.address)
             }
         }
 

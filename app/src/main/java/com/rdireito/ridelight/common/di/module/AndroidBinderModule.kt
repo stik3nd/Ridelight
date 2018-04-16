@@ -2,9 +2,9 @@ package com.rdireito.ridelight.common.di.module
 
 import com.rdireito.ridelight.feature.ride.ui.RideActivity
 import com.rdireito.ridelight.common.di.scope.ActivityScope
+import com.rdireito.ridelight.feature.addresssearch.AddressSearchActivityModule
 import com.rdireito.ridelight.feature.ride.RideActivityModule
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
-import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivityModule
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 

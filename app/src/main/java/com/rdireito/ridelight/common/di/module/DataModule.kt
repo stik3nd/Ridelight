@@ -5,7 +5,6 @@ import com.rdireito.ridelight.common.data.executor.SchedulerComposer
 import dagger.Binds
 import dagger.Module
 import dagger.Reusable
-import javax.inject.Singleton
 
 @Module(includes = [
     RepositoryModule::class,

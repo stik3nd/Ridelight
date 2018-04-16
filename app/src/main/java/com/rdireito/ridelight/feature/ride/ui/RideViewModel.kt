@@ -5,11 +5,8 @@ import android.location.Location
 import arrow.core.Option
 import arrow.core.applicative
 import arrow.core.ev
-import arrow.core.getOrElse
 import arrow.syntax.applicative.map
 import arrow.syntax.option.none
-import arrow.syntax.option.some
-import arrow.syntax.option.toOption
 import com.rdireito.ridelight.common.architecture.BaseViewModel
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction.*
@@ -79,12 +76,13 @@ class RideViewModel @Inject constructor(
 
     private fun intentToAction(intent: RideUiIntent): RideAction =
         when (intent) {
-            is InitialIntent -> InitialAction
-            is ChangeDropoffIntent -> InvokeChangeDropoffAction
-            is ChangePickupIntent -> InvokeChangePickupAction
-            is OnActivityResultIntent -> CheckActivityResultAction(intent.activityResult)
+            is InitialIntent -> InitialAction(intent.savedInstanceState)
+            is ChangeDropoffIntent -> SkipAction
+            is ChangePickupIntent -> SkipAction
+            is OnActivityResultIntent -> CheckActivityResultAction(intent.eitherActivityResult)
             is ConfirmDropoffIntent -> ConfirmDropoffAction(intent.address, currentPosition)
             is ConfirmPickupIntent -> FetchEstimatesAction(intent.pickup, intent.dropoff)
+            is ProductTryAgainIntent -> FetchEstimatesAction(intent.pickup, intent.dropoff)
             is NewLocationIntent -> {
                 currentPosition = intent.location
                 SkipAction
@@ -101,25 +99,18 @@ class RideViewModel @Inject constructor(
                     is InitialResult.Initial -> {
                         previousState
                     }
-                }
-
-                is InvokeChangeDropoffResult.Invoke -> {
-                    previousState.copy(invokeChangeDropoff = true)
-                }
-
-                is InvokeChangePickupResult.Invoke -> {
-                    previousState.copy(invokeChangePickup = true)
+                    is InitialResult.RestoreState -> {
+                        result.restoredUiState
+                    }
                 }
 
                 is CheckActivityResult -> when (result) {
-                    is CheckActivityResult.Failure -> previousState.copy(
-                        invokeChangeDropoff = false, invokeChangePickup = false
-                    )
+                    is CheckActivityResult.Failure -> previousState
                     is CheckActivityResult.DropoffSuccess -> previousState.copy(
-                        invokeChangeDropoff = false, dropoffAdress = result.address.some()
+                            dropoffAdress = result.address
                     )
                     is CheckActivityResult.PickupSuccess -> previousState.copy(
-                        invokeChangePickup = false, pickupAdress = result.address.some()
+                        pickupAdress = result.address
                     )
                 }
 
@@ -131,7 +122,7 @@ class RideViewModel @Inject constructor(
                         showPickupFields = true, invalidAddress = false
                     )
                     is ConfirmDropoffResult.ValidWithPickup -> previousState.copy(
-                        pickupAdress = result.initialPickup
+                            pickupAdress = result.initialPickup.orNull()
                     )
                     is ConfirmDropoffResult.HideMessage -> previousState.copy(
                         invalidAddress = false
@@ -140,13 +131,13 @@ class RideViewModel @Inject constructor(
 
                 is FetchEstimatesResult -> when (result) {
                     is FetchEstimatesResult.Loading -> previousState.copy(
-                        isLoading = true, showProducts = true
+                        isLoading = true, showProducts = true, error = null, estimates = emptyList()
                     )
                     is FetchEstimatesResult.Error -> previousState.copy(
-                        isLoading = false, error = result.error
+                        isLoading = false, error = result.error, estimates = emptyList()
                     )
                     is FetchEstimatesResult.Success -> previousState.copy(
-                        isLoading = false, estimates = result.estimates
+                        isLoading = false, estimates = result.estimates, error = null
                     )
                     is FetchEstimatesResult.InvalidParams -> previousState.copy(
                         invalidAddress = true

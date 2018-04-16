@@ -8,14 +8,11 @@ import com.rdireito.ridelight.data.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.Reusable
-import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.Locale
-import javax.inject.Singleton
 
 @Module(includes = [ApiModule::class])
 class NetworkModule {

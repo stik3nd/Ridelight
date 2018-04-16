@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.widget.DefaultItemAnimator
+import android.transition.AutoTransition
 import android.transition.TransitionManager
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -17,7 +18,6 @@ import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
-import com.rdireito.ridelight.data.model.Location
 import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
 import com.rdireito.ridelight.feature.addresssearch.mvi.AddressSearchUiIntent
 import com.rdireito.ridelight.feature.addresssearch.mvi.AddressSearchUiIntent.*
@@ -67,7 +67,12 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
     override fun render(state: AddressSearchUiState) {
         state.selectedAddress.map(this::finishWithAddress)
 
-        TransitionManager.beginDelayedTransition(root)
+        TransitionManager.beginDelayedTransition(root, AutoTransition().
+            addTarget(addressSearchProgress)
+            .addTarget(addressSearchAddressEdit)
+            .addTarget(addressSearchClearImage)
+            .addTarget(addressSearchErrorText)
+        )
 
         addressSearchProgress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
         addressSearchClearImage.visibility = if (state.hasClearButton) View.VISIBLE else View.GONE

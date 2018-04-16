@@ -7,6 +7,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.AttributeSet
 import android.view.View
 import android.widget.Toast
+import com.jakewharton.rxbinding2.view.clicks
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.data.model.Estimate
 import com.rdireito.ridelight.feature.ride.ui.RideProductAdapter
@@ -22,8 +23,13 @@ class RideProductView @JvmOverloads constructor(
 ) : CardView(context, attributeSet, defStyleAttr) {
 
     private val heightChanges = BehaviorSubject.create<Int>()
-    private val productAdapter = RideProductAdapter { item, _ ->
-        Toast.makeText(getContext(), "Item=$item", Toast.LENGTH_SHORT).show()
+    private val productAdapter = RideProductAdapter { item, pos ->
+        onProductClicked(item, pos)
+    }
+
+    private fun onProductClicked(item: Estimate, pos: Int) {
+        Timber.d("Selected product=[$item]")
+        productAdapter.setSelected(pos)
     }
 
     init {
@@ -48,15 +54,18 @@ class RideProductView @JvmOverloads constructor(
     }
 
     fun setError(error: Throwable?) {
-        rideProductsErrorText.visibility = if (error != null) View.VISIBLE else View.GONE
-        error?.let {
-            rideProductsErrorText.text = "Error: ${it.localizedMessage}"
+        if (error != null) {
+            Timber.e(error)
+            rideProductsErrorText.visibility = View.VISIBLE
+            rideProductsTryAgainButton.visibility = View.VISIBLE
             productAdapter.clear()
+        } else {
+            rideProductsErrorText.visibility = View.GONE
+            rideProductsTryAgainButton.visibility = View.GONE
         }
     }
 
     fun setProducts(estimates: List<Estimate>) {
-
         if (estimates.isNotEmpty()) {
             productAdapter.clear()
             productAdapter.addAll(estimates)
@@ -66,5 +75,7 @@ class RideProductView @JvmOverloads constructor(
     fun heightChanges(): Observable<Int> =
         heightChanges.distinctUntilChanged()
             .doOnNext { Timber.d("RideProductView height has changed=[$it]") }
+
+    fun tryAgainClicks(): Observable<Unit> = rideProductsTryAgainButton.clicks()
 
 }

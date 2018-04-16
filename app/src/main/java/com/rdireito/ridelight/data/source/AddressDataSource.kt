@@ -2,13 +2,8 @@ package com.rdireito.ridelight.data.source
 
 import android.location.Geocoder
 import com.rdireito.ridelight.data.model.Address
-import com.rdireito.ridelight.data.model.Location
 import dagger.Reusable
 import io.reactivex.Maybe
-import io.reactivex.Single
-import timber.log.Timber
-import java.io.IOException
-import java.util.*
 import javax.inject.Inject
 
 @Reusable

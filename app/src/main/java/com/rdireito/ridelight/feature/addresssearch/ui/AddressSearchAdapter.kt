@@ -1,11 +1,9 @@
 package com.rdireito.ridelight.feature.addresssearch.ui
 
 import android.support.annotation.LayoutRes
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.ui.BaseRecyclerAdapter
 import com.rdireito.ridelight.common.ui.BaseViewHolder

@@ -66,7 +66,7 @@ class RideMapFragment : SupportMapFragment() {
 
     companion object {
         val TAG: String = RideMapFragment::class.java.canonicalName
-        private val DEFAULT_ZOOM = 17f
+        private const val DEFAULT_ZOOM = 17f
 
         fun newInstance() = RideMapFragment()
     }

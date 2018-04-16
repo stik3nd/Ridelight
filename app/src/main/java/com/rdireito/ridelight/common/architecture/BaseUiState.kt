@@ -1,3 +1,5 @@
 package com.rdireito.ridelight.common.architecture
 
-interface BaseUiState
+import android.os.Parcelable
+
+interface BaseUiState : Parcelable

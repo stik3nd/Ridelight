@@ -1,14 +1,15 @@
 package com.rdireito.ridelight.feature.ride.ui
 
+import arrow.core.Either
 import arrow.core.Option
 import arrow.core.applicative
 import arrow.core.ev
+import arrow.data.Try
+import arrow.data.getOrElse
 import arrow.syntax.applicative.map
 import arrow.syntax.option.none
 import arrow.syntax.option.some
-import arrow.syntax.option.toOption
 import com.rdireito.ridelight.common.data.executor.SchedulerComposer
-import com.rdireito.ridelight.common.ui.ActivityResult
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.data.model.request.EstimateRequest
 import com.rdireito.ridelight.data.repository.AddressRepository
@@ -22,7 +23,6 @@ import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity.Com
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult.FetchEstimatesResult.*
-import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import java.util.concurrent.TimeUnit
@@ -36,68 +36,52 @@ class RideActionProcessor @Inject constructor(
 
     private val initialActionProcessor =
         ObservableTransformer<RideAction.InitialAction, RideResult.InitialResult> { actions ->
-            actions.flatMap { _ ->
-                Observable
-                    .just(RideResult.InitialResult.Initial)
-            }
-        }
-
-    private val invokeChangeDropoffActionProcessor =
-        ObservableTransformer<InvokeChangeDropoffAction, InvokeChangeDropoffResult> { actions ->
-            actions.map { _ ->
-                InvokeChangeDropoffResult.Invoke
-            }
-        }
-
-    private val invokeChangePickupActionProcessor =
-        ObservableTransformer<InvokeChangePickupAction, InvokeChangePickupResult> { actions ->
-            actions.map { _ ->
-                InvokeChangePickupResult.Invoke
+            actions.map { action ->
+                action.savedInstanceState?.let {
+                    RideResult.InitialResult.RestoreState(it.getParcelable("state"))
+                } ?: {
+                    RideResult.InitialResult.Initial
+                }()
             }
         }
 
     private val checkActivityResultActionProcessor =
         ObservableTransformer<CheckActivityResultAction, CheckActivityResult> { actions ->
-            actions.flatMap { action ->
-                Observable.fromCallable<CheckActivityResult> {
-                    try {
-                        val activityResult = action.activityResult
-                        when (activityResult) {
-                            is ActivityResult.SuccessWithData -> {
-                                when (activityResult.requestCode) {
-                                    DROPOFF_REQUEST_CODE -> CheckActivityResult.DropoffSuccess(
-                                        activityResult.data[EXTRA_ADDRESS] as Address
-                                    )
+            actions.map { action ->
+                action.eitherActivityResult.fold(
+                    fail@{ activityResultHandleLeft() },
+                    success@{ successResult ->
+                        Try {
+                            when (successResult.requestCode) {
+                                DROPOFF_REQUEST_CODE -> CheckActivityResult.DropoffSuccess(
+                                    successResult.data[EXTRA_ADDRESS] as Address
+                                )
 
-                                    PICKUP_REQUEST_CODE -> CheckActivityResult.PickupSuccess(
-                                        activityResult.data[EXTRA_ADDRESS] as Address
-                                    )
+                                PICKUP_REQUEST_CODE -> CheckActivityResult.PickupSuccess(
+                                    successResult.data[EXTRA_ADDRESS] as Address
+                                )
 
-                                    else -> CheckActivityResult.Failure(
-                                        IllegalArgumentException("Unknown request code=[${activityResult.requestCode}]")
-                                    )
-                                }
+                                else -> CheckActivityResult.Failure(
+                                    IllegalArgumentException("Unknown request code=[${successResult.requestCode}]")
+                                )
                             }
-
-                            is ActivityResult.FailureWithData -> CheckActivityResult.Failure(
-                                Throwable("Result canceled")
-                            )
-                        }
-                    } catch (e: ClassCastException) {
-                        CheckActivityResult.Failure(e)
+                        }.getOrElse { t -> CheckActivityResult.Failure(t) }
                     }
-                }
+                )
             }
         }
+
+    private fun activityResultHandleLeft(): CheckActivityResult = CheckActivityResult.Failure(Throwable("Result canceled"))
 
     private val confirmDropoffActionProcessor =
         ObservableTransformer<ConfirmDropoffAction, ConfirmDropoffResult> { actions ->
             actions.flatMap { action ->
                 action.dropoffAddress.fold(
                     none@{
-                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS)
+                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS, scheduler.computation())
                             .map { ConfirmDropoffResult.HideMessage }
                             .cast(ConfirmDropoffResult::class.java)
+                            .observeOn(scheduler.io())
                             .startWith(ConfirmDropoffResult.Invalid)
                     },
                     some@{ _ ->
@@ -134,13 +118,14 @@ class RideActionProcessor @Inject constructor(
                 }).ev()
 
                 estimateRequest.fold(
-                    none@ {
-                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS)
+                    none@{
+                        Observable.timer(MESSAGE_TIME, TimeUnit.MILLISECONDS, scheduler.computation())
                             .map { FetchEstimatesResult.HideMessage }
                             .cast(FetchEstimatesResult::class.java)
+                            .observeOn(scheduler.ui())
                             .startWith(FetchEstimatesResult.InvalidParams)
                     },
-                    some@ { request ->
+                    some@{ request ->
                         estimateRepository.estimates(request)
                             .toObservable()
                             .map { estimates -> Success(estimates) }
@@ -158,8 +143,6 @@ class RideActionProcessor @Inject constructor(
     private fun matchActionsToProcessors(selector: Observable<RideAction>): Observable<RideResult> =
         Observable.merge(listOf(
             selector.ofType(InitialAction::class.java).compose(initialActionProcessor),
-            selector.ofType(InvokeChangeDropoffAction::class.java).compose(invokeChangeDropoffActionProcessor),
-            selector.ofType(InvokeChangePickupAction::class.java).compose(invokeChangePickupActionProcessor),
             selector.ofType(CheckActivityResultAction::class.java).compose(checkActivityResultActionProcessor),
             selector.ofType(ConfirmDropoffAction::class.java).compose(confirmDropoffActionProcessor),
             selector.ofType(FetchEstimatesAction::class.java).compose(fetchEstimatesProcessor)
@@ -168,8 +151,6 @@ class RideActionProcessor @Inject constructor(
     private fun assertActionIsImplemented(selector: Observable<RideAction>): Observable<RideResult> =
         selector.filter { v ->
             v !is InitialAction
-                && v !is InvokeChangeDropoffAction
-                && v !is InvokeChangePickupAction
                 && v !is CheckActivityResultAction
                 && v !is ConfirmDropoffAction
                 && v !is FetchEstimatesAction

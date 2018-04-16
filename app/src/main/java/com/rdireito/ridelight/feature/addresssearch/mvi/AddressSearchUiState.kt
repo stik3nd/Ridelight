@@ -5,13 +5,16 @@ import arrow.syntax.option.none
 import arrow.syntax.option.some
 import com.rdireito.ridelight.common.architecture.BaseUiState
 import com.rdireito.ridelight.data.model.Address
+import kotlinx.android.parcel.Parcelize
+import kotlinx.android.parcel.RawValue
 
+@Parcelize
 data class AddressSearchUiState(
     val isLoading: Boolean = false,
     val clearQuery: Boolean = false,
-    val addresses: List<Address> = emptyList(),
+    val addresses: @RawValue List<Address> = emptyList(),
     val error: Throwable? = null,
-    val selectedAddress: Option<Address> = none(),
+    val selectedAddress: @RawValue Option<Address> = none(),
     val hasClearButton: Boolean = false
 ) : BaseUiState {
 

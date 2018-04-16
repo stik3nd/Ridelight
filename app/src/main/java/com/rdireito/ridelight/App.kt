@@ -4,13 +4,8 @@ import com.rdireito.ridelight.common.di.component.DaggerAppComponent
 import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.support.DaggerApplication
-import io.reactivex.plugins.RxJavaPlugins
 import timber.log.Timber
 import javax.inject.Inject
-import io.reactivex.exceptions.UndeliverableException
-import java.io.IOException
-import java.net.SocketException
-
 
 class App : DaggerApplication() {
 

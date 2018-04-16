@@ -7,7 +7,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.Reusable
 import java.util.Locale
-import javax.inject.Singleton
 
 @Module
 class AndroidModule {

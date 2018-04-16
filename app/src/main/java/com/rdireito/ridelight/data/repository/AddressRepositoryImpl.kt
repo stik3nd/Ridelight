@@ -3,7 +3,6 @@ package com.rdireito.ridelight.data.repository
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.data.source.AddressDataSource
 import io.reactivex.Maybe
-import io.reactivex.Single
 import javax.inject.Inject
 
 
