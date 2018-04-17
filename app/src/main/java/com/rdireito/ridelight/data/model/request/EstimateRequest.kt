@@ -10,17 +10,6 @@ data class EstimateRequest(
     constructor(pickup: Address, dropoff: Address) : this(
         listOf(pickup.buildStop(), dropoff.buildStop())
     )
-
-
-    private fun buildStop(address: Address): Stop =
-        Stop(
-            listOf(address.location.latitude, address.location.longitude),
-            address.name,
-            address.address,
-            address.number,
-            address.city,
-            address.country
-        )
 }
 
 data class Stop(

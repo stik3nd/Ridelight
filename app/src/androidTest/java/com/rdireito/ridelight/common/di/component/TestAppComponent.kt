@@ -1,12 +1,9 @@
 package com.rdireito.ridelight.common.di.component
 
-import android.app.Application
-import android.content.Context
-import com.rdireito.ridelight.App
+import com.rdireito.ridelight.TestApp
 import com.rdireito.ridelight.common.di.module.AndroidBinderModule
-import com.rdireito.ridelight.common.di.module.AppModule
-import com.rdireito.ridelight.common.di.module.DataModule
-import dagger.BindsInstance
+import com.rdireito.ridelight.common.di.module.FakeAppModule
+import com.rdireito.ridelight.common.di.module.FakeDataModule
 import dagger.Component
 import dagger.android.AndroidInjector
 import dagger.android.support.AndroidSupportInjectionModule
@@ -16,13 +13,13 @@ import javax.inject.Singleton
 @Component(modules = [
     AndroidSupportInjectionModule::class,
     AndroidBinderModule::class,
-    AppModule::class,
-    DataModule::class
+    FakeAppModule::class,
+    FakeDataModule::class
 ])
 
-interface AppComponent : AndroidInjector<App> {
+interface TestAppComponent : AndroidInjector<TestApp> {
 
     @Component.Builder
-    abstract class Builder : AndroidInjector.Builder<App>()
+    abstract class Builder : AndroidInjector.Builder<TestApp>()
 
 }

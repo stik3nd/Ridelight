@@ -29,10 +29,10 @@ class RideAddressCardView @JvmOverloads constructor(
     private val heightChanges = BehaviorSubject.create<Int>()
 
 
-    var dropoffAdress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
+    var dropoffAddress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
         newValue.map { rideDropoffAddressView.updateAddress(it.address) }
     }
-    var pickupAdress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
+    var pickupAddress: Option<Address> by Delegates.observable(none()) { _, _, newValue ->
         newValue.map { ridePickupAddressView.updateAddress(it.address) }
     }
 
@@ -52,10 +52,10 @@ class RideAddressCardView @JvmOverloads constructor(
     fun pickupClicks(): Observable<Unit> = ridePickupAddressView.clicks()
 
     fun confirmDropoffClicks(): Observable<Option<Address>> =
-        dropoffActionContainer.clicks().map { dropoffAdress }
+        dropoffActionContainer.clicks().map { dropoffAddress }
 
     fun confirmPickupClicks(): Observable<Pair<Option<Address>, Option<Address>>> =
-        pickupActionContainer.clicks().map { Pair(pickupAdress, dropoffAdress) }
+        pickupActionContainer.clicks().map { Pair(pickupAddress, dropoffAddress) }
 
     fun showPickupFields() {
         val constraintSet = ConstraintSet()

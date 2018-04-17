@@ -1,13 +1,13 @@
 package com.rdireito.ridelight.feature.ride.ui
 
 import android.arch.lifecycle.ViewModel
-import android.location.Location
 import arrow.core.Option
 import arrow.core.applicative
 import arrow.core.ev
 import arrow.syntax.applicative.map
 import arrow.syntax.option.none
 import com.rdireito.ridelight.common.architecture.BaseViewModel
+import com.rdireito.ridelight.data.model.Location
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideAction.*
 import com.rdireito.ridelight.feature.ride.ui.mvi.RideResult
@@ -76,7 +76,7 @@ class RideViewModel @Inject constructor(
 
     private fun intentToAction(intent: RideUiIntent): RideAction =
         when (intent) {
-            is InitialIntent -> InitialAction(intent.savedInstanceState)
+            is InitialIntent -> InitialAction(intent.restoredUiState)
             is ChangeDropoffIntent -> SkipAction
             is ChangePickupIntent -> SkipAction
             is OnActivityResultIntent -> CheckActivityResultAction(intent.eitherActivityResult)
@@ -107,10 +107,10 @@ class RideViewModel @Inject constructor(
                 is CheckActivityResult -> when (result) {
                     is CheckActivityResult.Failure -> previousState
                     is CheckActivityResult.DropoffSuccess -> previousState.copy(
-                            dropoffAdress = result.address
+                            dropoffAddress = result.address
                     )
                     is CheckActivityResult.PickupSuccess -> previousState.copy(
-                        pickupAdress = result.address
+                        pickupAddress = result.address
                     )
                 }
 
@@ -122,7 +122,7 @@ class RideViewModel @Inject constructor(
                         showPickupFields = true, invalidAddress = false
                     )
                     is ConfirmDropoffResult.ValidWithPickup -> previousState.copy(
-                            pickupAdress = result.initialPickup.orNull()
+                            pickupAddress = result.initialPickup.orNull()
                     )
                     is ConfirmDropoffResult.HideMessage -> previousState.copy(
                         invalidAddress = false

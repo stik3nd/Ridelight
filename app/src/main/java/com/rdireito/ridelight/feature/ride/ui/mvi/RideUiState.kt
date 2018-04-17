@@ -11,8 +11,8 @@ data class RideUiState(
     val isLoading: Boolean = false,
     val estimates: @RawValue List<Estimate> = emptyList(),
     val error: Throwable? = null,
-    val dropoffAdress: Address? = null,
-    val pickupAdress: Address? = null,
+    val dropoffAddress: Address? = null,
+    val pickupAddress: Address? = null,
     val showPickupFields: Boolean = false,
     val showProducts: Boolean = false,
     val invalidAddress: Boolean = false

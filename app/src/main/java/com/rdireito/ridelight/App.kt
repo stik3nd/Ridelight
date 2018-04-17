@@ -7,9 +7,10 @@ import dagger.android.support.DaggerApplication
 import timber.log.Timber
 import javax.inject.Inject
 
-class App : DaggerApplication() {
+open class App : DaggerApplication() {
 
-    @Inject lateinit var logger: Timber.Tree
+    @Inject
+    lateinit var logger: Timber.Tree
 
     override fun onCreate() {
         super.onCreate()
@@ -30,7 +31,7 @@ class App : DaggerApplication() {
         Timber.plant(logger)
     }
 
-    override fun applicationInjector(): AndroidInjector<out App> {
+    override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
         return DaggerAppComponent.builder().create(this)
     }
 

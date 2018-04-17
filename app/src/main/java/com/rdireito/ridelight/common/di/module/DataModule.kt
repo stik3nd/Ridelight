@@ -7,6 +7,7 @@ import dagger.Module
 import dagger.Reusable
 
 @Module(includes = [
+    DataSourceModule::class,
     RepositoryModule::class,
     NetworkModule::class
 ])

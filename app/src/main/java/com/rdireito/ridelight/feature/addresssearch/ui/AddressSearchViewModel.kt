@@ -66,7 +66,7 @@ class AddressSearchViewModel @Inject constructor(
                 is FetchAddressesResult -> when (result) {
                     is Loading -> previousState.loading()
                     is Error -> previousState.error(result.error)
-                    is FetchAddressesResult.Success -> {
+                    is Success -> {
                         previousState.content(result.addresses)
                     }
                 }

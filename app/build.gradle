@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: "kotlin-allopen"
 
 android {
     def STRING_TYPE = 'String'
@@ -14,7 +15,7 @@ android {
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.rdireito.ridelight.common.di.AppJUnitRunner"
         multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
@@ -35,10 +36,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        execution 'ANDROID_TEST_ORCHESTRATOR'
+    }
+
+    sourceSets {
+        androidTest.java.srcDirs += "src/testCommons/java"
+        test.java.srcDirs += "src/testCommons/java"
+    }
 }
 
 androidExtensions {
     experimental = true
+}
+
+allOpen {
+    annotation("dagger.Module")
+    annotation("dagger.Provides")
 }
 
 dependencies {
@@ -96,10 +111,22 @@ dependencies {
     releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$versions.leak_canary"
     implementation "com.tbruyelle.rxpermissions2:rxpermissions:$versions.rx_permissions"
 
-    // Test
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    // Tests
+    testImplementation "junit:junit:$versions.junit"
+    testImplementation "org.mockito:mockito-core:$versions.mockito"
+    testImplementation "com.nhaarman:mockito-kotlin:$versions.mockito_kotlin"
+    testImplementation "org.hamcrest:hamcrest-all:$versions.hamcrest"
+
+    androidTestImplementation "org.mockito:mockito-android:$versions.mockito"
+    androidTestImplementation "com.nhaarman:mockito-kotlin:$versions.mockito_kotlin"
+    androidTestImplementation "com.android.support.test:runner:$versions.support_test"
+    androidTestImplementation "com.android.support.test:rules:$versions.support_test"
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    kaptAndroidTest "com.google.dagger:dagger-compiler:$versions.dagger"
+    kaptAndroidTest "com.google.dagger:dagger-android-processor:$versions.dagger"
+
+    androidTestUtil "com.android.support.test:orchestrator:$versions.support_test"
 }
 
 // Ensure the no-op dependency is always used in JVM tests.

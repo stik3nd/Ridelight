@@ -6,7 +6,7 @@ import io.reactivex.Maybe
 import javax.inject.Inject
 
 
-class AddressRepositoryImpl @Inject constructor(
+open class AddressRepositoryImpl @Inject constructor(
     private val addressDataSource: AddressDataSource
 ) : AddressRepository {
 

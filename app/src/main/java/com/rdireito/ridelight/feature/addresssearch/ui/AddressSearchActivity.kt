@@ -16,6 +16,7 @@ import com.jakewharton.rxbinding2.widget.editorActionEvents
 import com.jakewharton.rxbinding2.widget.textChanges
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
+import com.rdireito.ridelight.common.data.executor.SchedulerComposer
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
 import com.rdireito.ridelight.feature.TAP_THROTTLE_TIME
@@ -38,6 +39,8 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
             .of(this, viewModelFactory)
             .get(AddressSearchViewModel::class.java)
     }
+    @Inject
+    lateinit var scheduler: SchedulerComposer
 
     private val clearAddressIntentPublisher = PublishSubject.create<ClearAddressIntent>()
     private val inputSearchTextIntentPublisher = PublishSubject.create<InputSearchTextIntent>()
@@ -149,7 +152,7 @@ class AddressSearchActivity : BaseActivity(), BaseView<AddressSearchUiIntent, Ad
 
         )
             .filter { query -> query.length >= 3 }
-            .debounce(100, TimeUnit.MILLISECONDS)
+            .debounce(100, TimeUnit.MILLISECONDS, scheduler.computation())
             .observeOn(AndroidSchedulers.mainThread())
             .map(::ChangeAddressIntent)
             .subscribe(changeAddressIntentPublisher)

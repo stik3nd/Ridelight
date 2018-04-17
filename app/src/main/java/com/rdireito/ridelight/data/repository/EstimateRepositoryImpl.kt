@@ -6,7 +6,7 @@ import com.rdireito.ridelight.data.network.api.EstimateApi
 import io.reactivex.Single
 import javax.inject.Inject
 
-class EstimateRepositoryImpl @Inject constructor(
+open class EstimateRepositoryImpl @Inject constructor(
     private val estimateApi: EstimateApi
 ) : EstimateRepository {
 

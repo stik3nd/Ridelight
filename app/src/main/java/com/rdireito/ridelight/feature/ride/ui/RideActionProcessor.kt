@@ -1,6 +1,5 @@
 package com.rdireito.ridelight.feature.ride.ui
 
-import arrow.core.Either
 import arrow.core.Option
 import arrow.core.applicative
 import arrow.core.ev
@@ -37,11 +36,10 @@ class RideActionProcessor @Inject constructor(
     private val initialActionProcessor =
         ObservableTransformer<RideAction.InitialAction, RideResult.InitialResult> { actions ->
             actions.map { action ->
-                action.savedInstanceState?.let {
-                    RideResult.InitialResult.RestoreState(it.getParcelable("state"))
-                } ?: {
-                    RideResult.InitialResult.Initial
-                }()
+                when (action.restoredUiState) {
+                    null -> RideResult.InitialResult.Initial
+                    else -> RideResult.InitialResult.RestoreState(action.restoredUiState)
+                }
             }
         }
 
@@ -128,7 +126,7 @@ class RideActionProcessor @Inject constructor(
                     some@{ request ->
                         estimateRepository.estimates(request)
                             .toObservable()
-                            .map { estimates -> Success(estimates) }
+                            .map(FetchEstimatesResult::Success)
                             .cast(FetchEstimatesResult::class.java)
                             .onErrorReturn(FetchEstimatesResult::Error)
                             .subscribeOn(scheduler.io())

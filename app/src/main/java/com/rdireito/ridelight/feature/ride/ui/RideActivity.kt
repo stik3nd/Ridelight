@@ -7,7 +7,6 @@ import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.annotation.StringRes
 import android.support.constraint.ConstraintSet
 import android.support.design.widget.Snackbar
@@ -15,7 +14,6 @@ import android.transition.AutoTransition
 import android.transition.TransitionManager
 import android.view.View
 import arrow.core.Either
-import arrow.core.Either.Companion.left
 import arrow.syntax.either.left
 import arrow.syntax.either.right
 import arrow.syntax.option.some
@@ -24,11 +22,11 @@ import com.google.android.gms.location.LocationResult
 import com.rdireito.ridelight.R
 import com.rdireito.ridelight.common.architecture.BaseView
 import com.rdireito.ridelight.common.extension.*
-import com.rdireito.ridelight.common.ui.ActivityResult
 import com.rdireito.ridelight.common.ui.ActivityResult.FailureWithData
 import com.rdireito.ridelight.common.ui.ActivityResult.SuccessWithData
 import com.rdireito.ridelight.common.ui.BaseActivity
 import com.rdireito.ridelight.data.model.Address
+import com.rdireito.ridelight.data.model.Location
 import com.rdireito.ridelight.data.source.BoundLocationManager
 import com.rdireito.ridelight.feature.addresssearch.ui.AddressSearchActivity
 import com.rdireito.ridelight.feature.ride.ui.RideViewModel.Companion.DROPOFF_REQUEST_CODE
@@ -97,7 +95,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
-        outState?.putParcelable("state", uiState)
+        outState?.putParcelable(BUNDLE_UI_STATE, uiState)
         super.onSaveInstanceState(outState)
     }
 
@@ -123,13 +121,13 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
         }
 
         // renderDropoffState
-        state.dropoffAdress?.let { renderDropoff(it) }
+        state.dropoffAddress?.let { renderDropoff(it) }
 
         // renderPickupState
         if (state.showPickupFields) {
             rideAddressView.showPickupFields()
         }
-        state.pickupAdress?.let { renderPickup(it) }
+        state.pickupAddress?.let { renderPickup(it) }
 
         // renderProductsState
         if (state.showProducts) {
@@ -140,8 +138,6 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
                 setError(state.error)
                 setProducts(state.estimates)
             }
-        } else {
-            rideProductView.visibility = View.GONE
         }
     }
 
@@ -150,8 +146,13 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             attachViews()
 
         requestLocationPermission()
-        initialIntentObservable = Observable.just(InitialIntent(savedInstanceState))
+        createInitialIntent(savedInstanceState)
         subscribeToAddressHeightChanges()
+    }
+
+    private fun createInitialIntent(savedInstanceState: Bundle?) {
+        val previousState: RideUiState? = savedInstanceState?.getParcelable<RideUiState?>(BUNDLE_UI_STATE)
+        initialIntentObservable = Observable.just(InitialIntent(previousState))
     }
 
     private fun attachViews() {
@@ -213,7 +214,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             .map { ChangeDropoffIntent }
             .doOnNext {
                 startActivityForResult(AddressSearchActivity.getIntent(
-                    this, rideAddressView.dropoffAdress.orNull()), DROPOFF_REQUEST_CODE
+                    this, rideAddressView.dropoffAddress.orNull()), DROPOFF_REQUEST_CODE
                 )
             }
             .subscribe(changeDropoffIntentPublisher)
@@ -226,7 +227,7 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
             .map { ChangePickupIntent }
             .doOnNext {
                 startActivityForResult(AddressSearchActivity.getIntent(
-                    this, rideAddressView.pickupAdress.orNull()), PICKUP_REQUEST_CODE
+                    this, rideAddressView.pickupAddress.orNull()), PICKUP_REQUEST_CODE
                 )
             }
             .subscribe(changePickupIntentPublisher)
@@ -255,22 +256,22 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     private fun productTryAgainIntent(): Observable<ProductTryAgainIntent> {
         rideProductView.tryAgainClicks()
             .compose(userEventLimiter())
-            .map { ProductTryAgainIntent(rideAddressView.pickupAdress, rideAddressView.dropoffAdress) }
+            .map { ProductTryAgainIntent(rideAddressView.pickupAddress, rideAddressView.dropoffAddress) }
             .subscribe(productTryAgainIntentPublisher)
         return productTryAgainIntentPublisher
     }
 
     private fun renderDropoff(newAddress: Address) {
-        if (rideAddressView.dropoffAdress != newAddress.some()) {
+        if (rideAddressView.dropoffAddress != newAddress.some()) {
             updateMapState(newAddress.location.latitude, newAddress.location.longitude, RideMarker.DROPOFF)
-            rideAddressView.dropoffAdress = newAddress.some()
+            rideAddressView.dropoffAddress = newAddress.some()
         }
     }
 
     private fun renderPickup(newAddress: Address) {
-        if (rideAddressView.pickupAdress != newAddress.some()) {
+        if (rideAddressView.pickupAddress != newAddress.some()) {
             updateMapState(newAddress.location.latitude, newAddress.location.longitude, RideMarker.PICKUP)
-            rideAddressView.pickupAdress = newAddress.some()
+            rideAddressView.pickupAddress = newAddress.some()
         }
     }
 
@@ -333,9 +334,13 @@ class RideActivity : BaseActivity(), BaseView<RideUiIntent, RideUiState> {
     ) : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             result.locations.forEach {
-                locationPublisher.onNext(NewLocationIntent(it.some()))
+                locationPublisher.onNext(NewLocationIntent(Location(it).some()))
             }
         }
+    }
+
+    companion object {
+        private const val BUNDLE_UI_STATE = "ui_state"
     }
 
 }
