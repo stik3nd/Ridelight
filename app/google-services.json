@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "992378508112",
+    "firebase_url": "https://ridelight-200319.firebaseio.com",
+    "project_id": "ridelight-200319",
+    "storage_bucket": "ridelight-200319.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992378508112:android:f31c0b6c5caabff6af5255",
+        "android_client_info": {
+          "package_name": "com.rdireito.ridelight"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "992378508112-pcn6sd62a307ll9odc3ioppptut16qgr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rdireito.ridelight",
+            "certificate_hash": "f0bb9f37683002fd6ca6f530c7937b35794de4d8"
+          }
+        },
+        {
+          "client_id": "992378508112-l0k3pgn5mg8qojkmaccf3r8hsf4g1d3h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp1Nj5K4jYlImz7hPU37h-6W1l4XQp6_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "992378508112-l0k3pgn5mg8qojkmaccf3r8hsf4g1d3h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,52 +2,61 @@
 
 buildscript {
 
-
     ext.versions = [
-        // Gradle
-        gradle           : '3.0.1',
-        // Kotlin
-        kotlin           : '1.2.31',
-        // Android
-        support_library  : '27.1.1',
-        constraint_layout: '1.1.0',
-        play_services    : '12.0.1',
-        // Architecture Components
-        arch_components  : '1.1.1',
-        // Dagger
-        dagger           : '2.15',
-        // ReactiveX
-        rx_java          : '2.1.11',
-        rx_android       : '2.0.2',
-        rx_binding       : '2.1.1',
-        // Network
-        ok_http          : '3.10.0',
-        retrofit         : '2.4.0',
-        // Image loading/caching
-        glide            : '4.6.1',
-        // Arrow
-        arrow            : '0.6.1',
-        // Utils
-        timber           : '4.6.1',
-        leak_canary      : '1.5.4',
-        rx_permissions   : '0.9.5@aar',
-        // Tests
-        junit            : '4.12',
-        mockito          : '2.17.0',
-        mockito_kotlin   : '1.5.0',
-        hamcrest         : '1.3',
-        support_test     : '1.0.1'
+            // Gradle
+            gradle           : '3.5.0',
+            // Kotlin
+            kotlin           : '1.3.41',
+            // Android
+            support_library  : '27.1.1',
+            constraint_layout: '1.1.3',
+            play_services    : '15.0.0',
+            // Architecture Components
+            arch_components  : '1.1.1',
+            // Crashlytics
+            crashlytics      : '2.10.1',
+            // Dagger
+            dagger           : '2.15',
+            // ReactiveX
+            rx_java          : '2.1.11',
+            rx_android       : '2.0.2',
+            rx_binding       : '2.1.1',
+            // Network
+            ok_http          : '3.10.0',
+            retrofit         : '2.4.0',
+            // Image loading/caching
+            glide            : '4.6.1',
+            // Arrow
+            arrow            : '0.6.1',
+            // Utils
+            timber           : '4.6.1',
+            leak_canary      : '1.5.4',
+            rx_permissions   : '0.9.5@aar',
+            // Tests
+            junit            : '4.12',
+            mockito          : '2.17.0',
+            mockito_kotlin   : '1.5.0',
+            hamcrest         : '1.3',
+            support_test     : '1.0.1'
     ]
     repositories {
         google()
         jcenter()
+        maven {
+            url 'https://maven.fabric.io/public'
+        }
     }
+
     dependencies {
         classpath "com.android.tools.build:gradle:$versions.gradle"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "org.jetbrains.kotlin:kotlin-allopen:$versions.kotlin"
+        classpath 'com.google.gms:google-services:4.3.2'
+        classpath 'io.fabric.tools:gradle:1.31.2'
     }
 }
+
+apply plugin: 'kotlin'
 
 allprojects {
     repositories {
@@ -55,8 +64,20 @@ allprojects {
         jcenter()
         maven { url "https://jitpack.io" }
     }
-}
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    //kapt bug is not using source/target compatibility above, making dagger use incorrect javax
+    //annotations. https://youtrack.jetbrains.com/issue/KT-32804
+    //TODO: Remove afterEvaluate block when bug is fixed by jetbrains.
+    afterEvaluate { project ->
+        if (project.hasProperty('kapt')) {
+            kapt {
+                javacOptions {
+                    option("-source", "8")
+                    option("-target", "8")
+                }
+            }
+        }
+    }
 }
